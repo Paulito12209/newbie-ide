@@ -15,6 +15,17 @@ npm install && npm run dev
 `npm run build` typechecks and builds to `dist/`. `npm run preview` serves the
 build. `npm run size` prints the measured bundle table below.
 
+## Deploy
+
+Static output, no backend, no runtime - any static host works. `vercel.json`
+pins the Vite preset, `npm run build` and `dist/`, and sets immutable caching on
+the hashed files in `/assets`.
+
+On Vercel: import the repository at vercel.com/new and deploy. Nothing to
+configure - the root of the repo is the project root, and there are no
+environment variables. Pushes to `main` deploy automatically after that, and
+branches get preview URLs.
+
 ## Measured bundle size
 
 Produced by `npm run build && npm run size` (gzip level 9):
