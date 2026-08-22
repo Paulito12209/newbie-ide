@@ -8,6 +8,7 @@
  * A real <dialog>, so the backdrop, Escape and focus trapping come for free.
  */
 import type { FileDoc, ThemeMode } from '../state';
+import { closeOnBackdrop } from './dismiss';
 import { applyTheme, nextTheme, themeLabel } from './theme';
 
 export interface DrawerOptions {
@@ -36,8 +37,19 @@ export function createDrawer(options: DrawerOptions): Drawer {
   const dialog = document.createElement('dialog');
   dialog.className = 'sl-drawer';
 
+  const header = document.createElement('div');
+  header.className = 'sl-drawer-header';
+
   const heading = document.createElement('h2');
   heading.textContent = 'Files';
+
+  // The backdrop is only a quarter of the screen wide, so give the drawer a
+  // control of its own rather than relying on people finding the edge.
+  const close = button('sl-drawer-close', 'Close');
+  close.setAttribute('aria-label', 'Close file panel');
+  close.addEventListener('click', () => dialog.close());
+
+  header.append(heading, close);
 
   const list = document.createElement('div');
   list.className = 'sl-drawer-list';
@@ -60,7 +72,8 @@ export function createDrawer(options: DrawerOptions): Drawer {
   footer.className = 'sl-drawer-footer';
   footer.append(create, themeButton);
 
-  dialog.append(heading, list, footer);
+  dialog.append(header, list, footer);
+  closeOnBackdrop(dialog);
   document.body.append(dialog);
 
   return {

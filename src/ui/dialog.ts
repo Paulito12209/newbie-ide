@@ -5,6 +5,8 @@
  * focus trapping and Escape handling with it, which is a lot of behaviour for
  * no bytes.
  */
+import { closeOnBackdrop } from './dismiss';
+
 export interface FileDialogOptions {
   title: string;
   value: string;
@@ -84,6 +86,7 @@ export function openFileDialog(options: FileDialogOptions): void {
     error.textContent = '';
   });
 
+  closeOnBackdrop(dialog);
   dialog.addEventListener('close', () => dialog.remove());
   dialog.showModal();
 

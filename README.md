@@ -157,10 +157,26 @@ desktop one.
 - **The panel button** at the end of the file bar opens a drawer over three
   quarters of the screen from the right, listing the files top to bottom. It
   also holds "New file" and the theme control, since there is no top bar to put
-  them in.
+  them in. It closes on a tap outside, on its own Close button, or on Escape -
+  `showModal()` only gives you the last of those, and a phone has no Escape key.
 
 The pane slide is `translateX(-100%)` on both panes, so the geometry is pure CSS
 with no pixel maths in JavaScript.
+
+### The floating button inverts
+
+It is the one element that does not join the dark chrome, because it has to stay
+visible against whatever is behind it - and what is behind it is not always the
+theme background:
+
+| | behind it | button |
+|---|---|---|
+| Code, light | white page | dark, light icon |
+| Code, dark | dark editor | **light, dark icon** |
+| Display, either theme | the user's page, which is white | dark, light icon |
+
+So it flips with the theme over the editor, and stays dark over the preview.
+Measured contrast against the surface behind it is 13.97:1 at worst.
 
 ### iOS zoom
 

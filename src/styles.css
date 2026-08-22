@@ -408,7 +408,14 @@ body {
 
 .sl-drawer::backdrop { background: rgba(0, 0, 0, 0.45); }
 
+.sl-drawer-header {
+  display: flex;
+  align-items: baseline;
+  border-bottom: 1px solid var(--line);
+}
+
 .sl-drawer h2 {
+  flex: 1;
   margin: 0;
   padding: 14px 16px 10px;
   font-size: 12px;
@@ -417,6 +424,18 @@ body {
   text-transform: uppercase;
   color: var(--muted);
 }
+
+.sl-drawer-close {
+  font: inherit;
+  font-size: 12px;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  padding: 12px 16px;
+  cursor: pointer;
+}
+
+.sl-drawer-close:hover { color: var(--fg); }
 
 .sl-drawer-list {
   flex: 1;
@@ -579,11 +598,23 @@ body {
     height: 48px;
     border: 0;
     border-radius: 50%;
-    color: var(--bar-fg);
-    background: var(--bar-bg);
-    backdrop-filter: blur(10px);
     box-shadow: 0 2px 10px var(--shadow);
     cursor: pointer;
+  }
+
+  /* The one element that inverts instead of joining the dark chrome, because
+     it has to stay visible against whatever is behind it. Over the editor that
+     is the theme background, so it flips with the theme. */
+  #app[data-mobile-view='editor'] #pane-fab {
+    background: var(--fg);
+    color: var(--bg);
+  }
+
+  /* Over the preview it is the user's own page, which is white in both themes
+     - so this one stays dark whatever the theme says. */
+  #app[data-mobile-view='preview'] #pane-fab {
+    background: #111111;
+    color: #ffffff;
   }
 
   #preview { border-left: 0; }
