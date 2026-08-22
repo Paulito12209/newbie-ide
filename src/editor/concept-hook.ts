@@ -39,11 +39,13 @@ export interface CursorContext {
   /** True while the editor has DOM focus. */
   hasFocus: boolean;
   /**
-   * Narrow write access, for a provider that has to clean up its own trigger
-   * text. Deliberately the only way a concept can touch the document: the
-   * teaching layer explains code, it does not write it.
+   * Narrow write access. Deliberately the only way the teaching layer can touch
+   * the document.
+   *
+   * `caret` is an offset into the inserted text and defaults to its end, which
+   * is what a provider needs to drop the cursor inside a pair it just wrote.
    */
-  replaceRange(from: number, to: number, insert?: string): void;
+  replaceRange(from: number, to: number, insert?: string, caret?: number): void;
 }
 
 export interface ConceptWidget {
@@ -137,11 +139,12 @@ function contextOf(view: EditorView, language: LangId): CursorContext {
     column: range.head - line.from,
     selectionEmpty: range.empty,
     hasFocus: view.hasFocus,
-    replaceRange(from, to, insert = '') {
+    replaceRange(from, to, insert = '', caret = insert.length) {
       view.dispatch({
         changes: { from, to, insert },
-        selection: { anchor: from + insert.length },
+        selection: { anchor: from + Math.max(0, Math.min(caret, insert.length)) },
         userEvent: 'input.concept',
+        scrollIntoView: true,
       });
     },
   };

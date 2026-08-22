@@ -31,20 +31,14 @@ branches get preview URLs.
 Produced by `npm run build && npm run size` (gzip level 9):
 
 ```
-  339.40 KB raw    110.40 KB gzip  initial  assets/index-*.js
-   76.43 KB raw     30.19 KB gzip  lazy     assets/js-*.js
-   16.92 KB raw      8.01 KB gzip  lazy     assets/css-*.js
-    8.42 KB raw      3.28 KB gzip  lazy     assets/concepts-*.js
-    7.69 KB raw      1.94 KB gzip  lazy     assets/concepts-*.css
-    6.97 KB raw      2.11 KB gzip  initial  assets/index-*.css
-    1.69 KB raw      0.79 KB gzip  initial  index.html
-----------------------------------------------------------------
-initial (cold load): 113.30 KB gzip
-lazy (on demand):     43.42 KB gzip
-total:               156.72 KB gzip
+initial (cold load): 113.76 KB gzip
+lazy (on demand):     44.46 KB gzip
+total:               158.22 KB gzip
 ```
 
-**156.72 KB gzipped total**, of which **113.30 KB** is fetched on cold load.
+Run `npm run size` for the per-file breakdown.
+
+**158.22 KB gzipped total**, of which **113.76 KB** is fetched on cold load.
 Budget was 400 KB.
 
 ## Files
@@ -157,26 +151,30 @@ desktop one.
   rather than a hard divider - the editor scrolls underneath it and keeps a
   matching bottom inset so the last line is never trapped behind it. It is dark
   in both themes on purpose: it reads as chrome above the content.
-- **One pane at a time.** A single button pinned to the edge you are heading
-  towards: **Display** on the right while you are in the code, **Code** on the
-  left once you are in the preview. The peeking strip and the edge swipe are
-  gone; the right edge no longer does anything special.
-- **The options button** sits at the end of the file bar. With no top bar, that
-  is where the theme control lives.
-
-The switch button rides down the screen as the screen gets taller: 24px below
-centre at 667px tall, and another 24px for every 100px of height after that.
-
-```css
---switch-offset: max(24px, calc(24px + (100dvh - 667px) * 0.24));
-top: min(calc(50% + var(--switch-offset)), calc(100% - var(--bar-h) - 56px));
-```
-
-Measured: 24px at 667, 48px at 767, 59px at 812 - and the `min()` keeps it clear
-of the file bar on short, wide windows.
+- **One pane at a time**, switched by a floating button above the file bar. Its
+  icon is the destination: a monitor while you are in the code, angle brackets
+  once you are looking at the page.
+- **The panel button** at the end of the file bar opens a drawer over three
+  quarters of the screen from the right, listing the files top to bottom. It
+  also holds "New file" and the theme control, since there is no top bar to put
+  them in.
 
 The pane slide is `translateX(-100%)` on both panes, so the geometry is pure CSS
 with no pixel maths in JavaScript.
+
+### iOS zoom
+
+Two different causes, two different fixes:
+
+- **Double-tap zoom** fired when tapping file tabs in quick succession. Every
+  control carries `touch-action: manipulation`, which removes the double-tap
+  gesture without touching pinch zoom.
+- **Focus zoom** fired on the rename dialog: iOS zooms the viewport whenever a
+  text field smaller than 16px takes focus, and does not zoom back out. That
+  input is pinned to 16px.
+
+Pinch zoom is left alone - `user-scalable=no` would have fixed both in one line
+and taken accessibility with it.
 
 ## Error handling
 
@@ -196,6 +194,7 @@ src/
   concepts/
     slash-menu.ts      the `/` menu; a plain consumer of the hook below
     catalog.ts         the concepts and their animated demos
+    tags.ts            the HTML tag palette
     concepts.css       menu, card and every demo animation
   editor/
     editor.ts          CodeMirror setup; one EditorState per tab
@@ -208,7 +207,7 @@ src/
     bridge.ts          the only module that talks to the iframe
     runtime.ts         the script that runs inside the iframe
   ui/
-    tabs.ts  dialog.ts  options.ts  menubar.ts  theme.ts
+    tabs.ts  drawer.ts  dialog.ts  icons.ts  menubar.ts  theme.ts
     splitter.ts  mobile.ts  status.ts
 ```
 
@@ -255,35 +254,65 @@ text. The teaching layer explains code, it does not write code.
 
 ## The slash menu
 
-Type `/` in any tab. A menu opens at the cursor, filters as you keep typing,
-and Enter opens a short explanation with a small animated demo. Arrow keys move,
-Escape dismisses, and moving the cursor to another line puts the card away.
+Type `/` in any tab. The menu opens at the cursor, filters as you keep typing,
+and Enter uses the selected entry. Arrow keys move, Escape dismisses.
 
 `/` only triggers at the start of a line or after a space, so `</div>`,
 `//comment` and `a / b` never open it.
 
-Eleven concepts ship today - element, attribute, nesting (HTML); selector, box
-model, flexbox, transition (CSS); let/const, function, event listener, loop
-(JS). Results from the active tab rank first, but the other languages stay
-visible: a beginner in the CSS tab who searches for "loop" still finds it.
+Two kinds of entry share the list.
 
-Adding a concept means adding one entry to `src/concepts/catalog.ts`. Every
+### Tags (HTML files)
+
+Picking one inserts the markup and leaves the caret between the tags, so you can
+type the content straight away:
+
+```
+</p>          <- caret here, press Enter
+    /h1       <- the prompt opens by itself
+    <h1>|</h1>  <- pick h1
+```
+
+Pressing Enter **directly after a closing tag** opens the next line already
+prompting. Anywhere else Enter is just Enter - mid-line or inside an attribute a
+new element makes no sense, and a prompt you did not ask for is worse than one
+keystroke. Escape on a prompt you did not type removes it again.
+
+26 tags: `h1`-`h6`, `p`, `div`, `span`, `a`, `button`, `ul`, `ol`, `li`, `img`,
+`strong`, `em`, `br`, `section`, `header`, `footer`, `nav`, `main`, `form`,
+`input`, `label`.
+
+This is snippet insertion, which the brief originally ruled out, and it is here
+for one reason: on a phone keyboard `<` and `>` sit two layers deep, so writing
+markup by hand is an input problem rather than a typing-speed one. The
+compromise is that **every row shows the markup it will insert** - the brackets
+you did not type are still the brackets you see.
+
+### Concepts
+
+Concepts insert nothing. Enter opens a short explanation with a small animated
+demo, and moving the cursor to another line puts it away.
+
+Eleven ship today - element, attribute, nesting (HTML); selector, box model,
+flexbox, transition (CSS); let/const, function, event listener, loop (JS).
+Entries from the active language rank first, but the others stay reachable: a
+beginner in the CSS tab who searches for "loop" still finds it.
+
+Adding either kind means adding one entry to `catalog.ts` or `tags.ts`. Every
 demo animates in pure CSS, so an open card runs no script and no timer, and
 `prefers-reduced-motion` collapses each one to its first frame.
 
-**This is not autocompletion.** Choosing an entry inserts nothing. It removes
-the `/query` you typed - which was never valid code - and opens an explanation.
-One consequence worth knowing: while the prompt is on screen the `/query` really
-is in your document, so an HTML or JS preview rebuild will show it (or, in the
-JS tab, report it as a syntax error) until you pick a concept or delete it.
-
-The whole layer is a separate chunk (3.29 KB JS + 1.96 KB CSS gzipped), imported
-after the editor is up, so it stays off the cold-load path.
+The whole layer is a separate chunk, imported after the editor is up, so it
+stays off the cold-load path.
 
 ## Deliberately absent
 
-No autocompletion, no IntelliSense, no AI suggestions, no snippet expansion.
-Nothing in this editor ever writes code for you - the slash menu included.
+No autocompletion, no IntelliSense, no AI suggestions. Nothing completes as you
+type, ever.
+
+The one deliberate exception is the tag half of the slash menu, described above:
+it is invoked explicitly, it shows the markup it inserts, and it exists because
+angle brackets are hard to reach on a phone - not to make typing faster.
 `@codemirror/autocomplete` is **not in the dependency tree at all** - verify with
 `npm ls @codemirror/autocomplete`.
 

@@ -10,6 +10,7 @@
  * control competing for the same 60 pixels.
  */
 import type { FileDoc } from '../state';
+import { ICON_PANEL } from './icons';
 
 export interface TabsOptions {
   onSelect: (id: string) => void;
@@ -21,10 +22,6 @@ export interface TabsOptions {
 export interface Tabs {
   render(files: readonly FileDoc[], activeId: string): void;
 }
-
-const DOTS =
-  '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">' +
-  '<circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13" cy="8" r="1.5"/></svg>';
 
 export function createTabs(host: HTMLElement, options: TabsOptions): Tabs {
   const scroller = document.createElement('div');
@@ -43,9 +40,9 @@ export function createTabs(host: HTMLElement, options: TabsOptions): Tabs {
   const menu = document.createElement('button');
   menu.type = 'button';
   menu.className = 'tab-options';
-  menu.innerHTML = DOTS;
-  menu.title = 'Options';
-  menu.setAttribute('aria-label', 'Options');
+  menu.innerHTML = ICON_PANEL;
+  menu.title = 'Files';
+  menu.setAttribute('aria-label', 'Open file panel');
   menu.addEventListener('click', () => options.onOptions());
 
   host.append(scroller, menu);

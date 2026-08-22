@@ -216,24 +216,3 @@ export const CONCEPTS: readonly Concept[] = [
       ),
   },
 ];
-
-/**
- * Ranks concepts for a query. The active tab wins ties, so a beginner writing
- * CSS sees CSS concepts first without other languages disappearing entirely.
- */
-export function search(query: string, language: LangId): Concept[] {
-  const q = query.trim().toLowerCase();
-
-  const scored = CONCEPTS.map((concept) => {
-    const title = concept.title.toLowerCase();
-    let score = -1;
-    if (!q) score = 0;
-    else if (concept.id.startsWith(q) || title.startsWith(q)) score = 3;
-    else if (title.includes(q)) score = 2;
-    else if (concept.keywords.some((word) => word.toLowerCase().startsWith(q))) score = 1;
-    return { concept, score: score + (concept.language === language ? 0.5 : 0) };
-  }).filter((entry) => entry.score >= 0);
-
-  scored.sort((a, b) => b.score - a.score);
-  return scored.map((entry) => entry.concept);
-}

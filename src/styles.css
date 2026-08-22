@@ -104,6 +104,16 @@
 
 * { box-sizing: border-box; }
 
+/* iOS zooms the page on a double tap. Every control here is tapped in quick
+   succession at some point - switching files, stepping through a menu - so none
+   of them should be a zoom target. */
+button,
+[role='tab'],
+.sl-row,
+.sl-drawer-row {
+  touch-action: manipulation;
+}
+
 html, body {
   margin: 0;
   height: 100%;
@@ -305,6 +315,9 @@ body {
 .sl-dialog input {
   font: inherit;
   font-family: var(--font-mono);
+  /* Below 16px, iOS zooms the page when the field takes focus and never zooms
+     back out. This is the rename dialog, so it has to stay at 16. */
+  font-size: 16px;
   color: var(--fg);
   background: var(--bg);
   border: 1px solid var(--border-strong);
@@ -365,6 +378,102 @@ body {
 
 .sl-options-item:hover { background: var(--surface-2); }
 
+/* --- file drawer ------------------------------------------------------------
+   Three quarters of the screen, in from the right, listing the files top to
+   bottom. */
+
+.sl-drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: 75%;
+  max-width: 420px;
+  height: 100%;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 13px;
+}
+
+/* Only when open: a bare `display` here would override the UA's display:none
+   and leave the drawer permanently on screen. */
+.sl-drawer[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.sl-drawer::backdrop { background: rgba(0, 0, 0, 0.45); }
+
+.sl-drawer h2 {
+  margin: 0;
+  padding: 14px 16px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sl-drawer-list {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.sl-drawer-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+
+.sl-drawer-row.sl-drawer-current { background: var(--surface-2); }
+
+.sl-drawer-name {
+  flex: 1;
+  font: inherit;
+  font-family: var(--font-mono);
+  text-align: left;
+  color: var(--fg);
+  background: transparent;
+  border: 0;
+  padding: 13px 16px;
+  cursor: pointer;
+}
+
+.sl-drawer-current .sl-drawer-name { font-weight: 600; }
+
+.sl-drawer-rename {
+  font: inherit;
+  font-size: 12px;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  padding: 13px 16px;
+  cursor: pointer;
+}
+
+.sl-drawer-footer {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line);
+}
+
+.sl-drawer-action {
+  font: inherit;
+  text-align: left;
+  color: var(--fg);
+  background: transparent;
+  border: 0;
+  padding: 13px 16px;
+  cursor: pointer;
+}
+
+.sl-drawer-action:hover { background: var(--surface-2); }
+
 /* --- mobile -----------------------------------------------------------------
    One pane at a time, full width. No bar along the top: the file bar moves to
    the bottom as a dark strip floating over the code, and switching panes is a
@@ -372,7 +481,7 @@ body {
 
    Keep the query in sync with MOBILE_QUERY in src/ui/mobile.ts. */
 
-.pane-switch { display: none; }
+ #pane-fab { display: none; }
 
 @media (max-width: 767px) {
   :root {
@@ -453,34 +562,28 @@ body {
     border-left: 1px solid var(--bar-hairline);
   }
 
-  .tab-options svg { fill: currentColor; }
-
   /* The bar floats over the code, so the last lines need somewhere to go. */
   #editor-host .cm-scroller { padding-bottom: calc(var(--bar-h) + 8px); }
 
-  /* Pane switch. Position follows the viewport height: 24px below centre at
-     667px tall, and another 24px for every 100px of height after that. */
-  .pane-switch {
-    --switch-offset: max(24px, calc(24px + (100dvh - 667px) * 0.24));
+  /* Floating switch, above the file bar. The icon shows where it takes you:
+     a monitor from the code, angle brackets from the page. */
+  #pane-fab {
     position: absolute;
-    top: min(calc(50% + var(--switch-offset)), calc(100% - var(--bar-h) - 56px));
+    right: 16px;
+    bottom: calc(var(--bar-h) + 16px);
     z-index: 7;
-    font: inherit;
-    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: 50%;
     color: var(--bar-fg);
     background: var(--bar-bg);
     backdrop-filter: blur(10px);
-    border: 0;
-    padding: 10px 12px;
+    box-shadow: 0 2px 10px var(--shadow);
     cursor: pointer;
-  }
-
-  #to-preview { right: 0; }
-  #to-editor { left: 0; }
-
-  #app[data-mobile-view='editor'] #to-preview,
-  #app[data-mobile-view='preview'] #to-editor {
-    display: block;
   }
 
   #preview { border-left: 0; }

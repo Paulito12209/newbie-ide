@@ -14,7 +14,7 @@ import type { PreviewError } from './preview/bridge';
 import { openFileDialog } from './ui/dialog';
 import { createMenuBar } from './ui/menubar';
 import { MOBILE_QUERY, createMobilePanes } from './ui/mobile';
-import { createOptionsMenu } from './ui/options';
+import { createDrawer } from './ui/drawer';
 import { createSplitter } from './ui/splitter';
 import { createStatus } from './ui/status';
 import { createTabs } from './ui/tabs';
@@ -30,8 +30,7 @@ const menubarHost = document.getElementById('menubar') as HTMLElement;
 const editorHost = document.getElementById('editor-host') as HTMLElement;
 const tabsHost = document.getElementById('tabs') as HTMLElement;
 const splitterHandle = document.getElementById('splitter') as HTMLElement;
-const toPreviewButton = document.getElementById('to-preview') as HTMLElement;
-const toEditorButton = document.getElementById('to-editor') as HTMLElement;
+const paneFab = document.getElementById('pane-fab') as HTMLElement;
 const iframe = document.getElementById('preview') as HTMLIFrameElement;
 const statusBar = document.getElementById('status') as HTMLElement;
 
@@ -45,7 +44,6 @@ const onThemeChange = (mode: typeof session.theme): void => {
 };
 
 createMenuBar(menubarHost, { theme: session.theme, onThemeChange });
-const optionsMenu = createOptionsMenu({ theme: session.theme, onThemeChange });
 
 const status = createStatus(statusBar);
 
@@ -137,7 +135,15 @@ const tabs = createTabs(tabsHost, {
   onSelect: (id) => selectFile(id),
   onRename: (id) => renameFile(id),
   onCreate: () => createFile(),
-  onOptions: () => optionsMenu.toggle(),
+  onOptions: () => drawer.open(session.files, session.activeId),
+});
+
+const drawer = createDrawer({
+  theme: session.theme,
+  onThemeChange,
+  onSelect: (id) => selectFile(id),
+  onRename: (id) => renameFile(id),
+  onCreate: () => createFile(),
 });
 
 function paintTabs(): void {
@@ -231,7 +237,7 @@ let detachLayout: (() => void) | null = null;
 function applyLayout(): void {
   detachLayout?.();
   detachLayout = narrow.matches
-    ? createMobilePanes(app, { toPreview: toPreviewButton, toEditor: toEditorButton })
+    ? createMobilePanes(app, { fab: paneFab })
     : createSplitter(app, splitterHandle, {
         initial: session.split,
         onChange: (percent) => {

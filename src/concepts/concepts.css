@@ -60,6 +60,25 @@
   padding: 0 3px;
 }
 
+.sl-badge-tag {
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+
+/* The markup the row will insert, shown rather than hidden. */
+.sl-markup {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg);
+  background: var(--fill);
+  padding: 1px 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .sl-desc {
   color: var(--muted);
   margin-top: 2px;
