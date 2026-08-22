@@ -268,9 +268,9 @@ write the CSS **into the stylesheet**, into the file you can see and edit. If yo
 delete the rules, the layout stops working, exactly as it would anywhere else.
 Nothing is applied invisibly.
 
-The CSS is deliberately tiny and shared: one block per family, reused by every
-count. With flexbox that is all it needs - `flex: 1` divides the row however
-many children there are - so a second template of the same family adds nothing.
+The CSS is written the way it is taught, not the way it is shortest. A class on
+each child rather than `> *` or `* + *`, and `:first-child` to drop the divider
+on the one that does not need it - every selector is one you can look up:
 
 ```css
 .columns {
@@ -278,18 +278,23 @@ many children there are - so a second template of the same family adds nothing.
   gap: 16px;
 }
 
-.columns > * {
+.column {
   flex: 1;
+  padding-left: 16px;
+  border-left: 1px solid #e0e0e0;
 }
 
-.columns > * + * {
-  border-left: 1px solid #e0e0e0;
-  padding-left: 16px;
+.column:first-child {
+  padding-left: 0;
+  border-left: none;
 }
 ```
 
-Cards get a border and a radius instead of the divider. Turning the grid rule on
-switches both families to CSS grid, which then does need a rule per column count.
+One block per family, reused by every count: with flexbox `flex: 1` divides the
+row however many children there are, so a second template of the same family
+adds nothing. Cards get a border and a radius instead of the divider. Turning
+the grid rule on switches both families to CSS grid, which then does need a rule
+per column count.
 
 ## Rules
 

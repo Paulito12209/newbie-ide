@@ -348,10 +348,34 @@ body {
   padding: 14px;
 }
 
+.sl-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .sl-dialog h2 {
+  flex: 1;
   margin: 0;
   font-size: 13px;
   font-weight: 600;
+}
+
+.sl-dialog-cancel {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  font: inherit;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.sl-dialog-cancel:hover {
+  color: var(--fg);
+  background: var(--surface-2);
 }
 
 .sl-dialog input {
@@ -374,23 +398,37 @@ body {
   color: var(--syn-invalid);
 }
 
+/* The two real decisions, splitting the width between them. */
 .sl-dialog-buttons {
   display: flex;
-  justify-content: flex-end;
   gap: 8px;
 }
 
 .sl-dialog-buttons button {
+  flex: 1;
   font: inherit;
   color: var(--fg);
   background: var(--surface-2);
   border: 1px solid var(--line);
-  padding: 5px 12px;
+  border-radius: 6px;
+  padding: 9px 12px;
   cursor: pointer;
 }
 
-.sl-dialog-confirm { background: var(--fill-strong); }
-.sl-dialog-delete { margin-right: auto; }
+/* Both need the parent in the selector: `.sl-dialog-buttons button` above is
+   more specific than a bare class would be, and would win otherwise. */
+.sl-dialog-buttons .sl-dialog-confirm {
+  background: var(--fill-strong);
+  border-color: var(--border-strong);
+}
+
+.sl-dialog-buttons .sl-dialog-delete {
+  color: var(--muted);
+  background: transparent;
+  border-color: var(--line);
+}
+
+.sl-dialog-buttons .sl-dialog-delete:hover { color: var(--fg); }
 
 .sl-options {
   position: fixed;

@@ -25,8 +25,23 @@ export function openFileDialog(options: FileDialogOptions): void {
   const form = document.createElement('form');
   form.method = 'dialog';
 
+  const header = document.createElement('div');
+  header.className = 'sl-dialog-header';
+
   const heading = document.createElement('h2');
   heading.textContent = options.title;
+
+  // Top right, out of the way: the two buttons at the bottom are the decisions,
+  // and backing out is not one of them.
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'sl-dialog-cancel';
+  cancel.textContent = 'X';
+  cancel.title = 'Cancel';
+  cancel.setAttribute('aria-label', 'Cancel');
+  cancel.addEventListener('click', () => dialog.close());
+
+  header.append(heading, cancel);
 
   const input = document.createElement('input');
   input.type = 'text';
@@ -42,6 +57,8 @@ export function openFileDialog(options: FileDialogOptions): void {
   const buttons = document.createElement('div');
   buttons.className = 'sl-dialog-buttons';
 
+  // Deliberately quieter than the confirm: deleting is the thing you reach for
+  // least, so it should not look like the obvious button.
   if (options.onDelete) {
     const remove = document.createElement('button');
     remove.type = 'button';
@@ -54,18 +71,13 @@ export function openFileDialog(options: FileDialogOptions): void {
     buttons.append(remove);
   }
 
-  const cancel = document.createElement('button');
-  cancel.type = 'button';
-  cancel.textContent = 'Cancel';
-  cancel.addEventListener('click', () => dialog.close());
-
   const confirm = document.createElement('button');
   confirm.type = 'submit';
   confirm.className = 'sl-dialog-confirm';
   confirm.textContent = options.confirmLabel;
 
-  buttons.append(cancel, confirm);
-  form.append(heading, input, error, buttons);
+  buttons.append(confirm);
+  form.append(header, input, error, buttons);
   dialog.append(form);
   document.body.append(dialog);
 

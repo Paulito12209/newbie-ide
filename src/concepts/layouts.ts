@@ -26,8 +26,9 @@ export interface LayoutEntry {
 }
 
 /**
- * Flexbox needs no per-count rule at all - `flex: 1` divides the row however
- * many children there are - so it is both the smaller CSS and the default.
+ * Written the way it is taught, not the way it is shortest: a class on each
+ * child instead of `> *` or `* + *`, and :first-child to drop the divider on
+ * the one that does not need it. Every selector here is one you can look up.
  */
 const COLUMNS_FLEX: CssBlock = {
   test: '.columns {',
@@ -37,13 +38,15 @@ const COLUMNS_FLEX: CssBlock = {
     '  gap: 16px;',
     '}',
     '',
-    '.columns > * {',
+    '.column {',
     '  flex: 1;',
+    '  padding-left: 16px;',
+    '  border-left: 1px solid #e0e0e0;',
     '}',
     '',
-    '.columns > * + * {',
-    '  border-left: 1px solid #e0e0e0;',
-    '  padding-left: 16px;',
+    '.column:first-child {',
+    '  padding-left: 0;',
+    '  border-left: none;',
     '}',
   ].join('\n'),
 };
@@ -56,11 +59,11 @@ const CARDS_FLEX: CssBlock = {
     '  gap: 16px;',
     '}',
     '',
-    '.cards > * {',
+    '.card {',
     '  flex: 1;',
+    '  padding: 16px;',
     '  border: 1px solid #e0e0e0;',
     '  border-radius: 8px;',
-    '  padding: 16px;',
     '}',
   ].join('\n'),
 };
@@ -73,9 +76,14 @@ const COLUMNS_GRID: CssBlock = {
     '  gap: 16px;',
     '}',
     '',
-    '.columns > * + * {',
-    '  border-left: 1px solid #e0e0e0;',
+    '.column {',
     '  padding-left: 16px;',
+    '  border-left: 1px solid #e0e0e0;',
+    '}',
+    '',
+    '.column:first-child {',
+    '  padding-left: 0;',
+    '  border-left: none;',
     '}',
   ].join('\n'),
 };
@@ -88,10 +96,10 @@ const CARDS_GRID: CssBlock = {
     '  gap: 16px;',
     '}',
     '',
-    '.cards > * {',
+    '.card {',
+    '  padding: 16px;',
     '  border: 1px solid #e0e0e0;',
     '  border-radius: 8px;',
-    '  padding: 16px;',
     '}',
   ].join('\n'),
 };
@@ -101,8 +109,12 @@ const track = (selector: string, count: number): CssBlock => ({
   text: [`${selector} {`, `  grid-template-columns: repeat(${count}, 1fr);`, '}'].join('\n'),
 });
 
-function children(count: number, indent = '  '): string {
-  return Array.from({ length: count }, (_, i) => `${indent}<div>${i === 0 ? '|' : ''}</div>`).join('\n');
+/** Each child carries its own class, so the CSS can name it directly. */
+function children(kind: 'column' | 'card', count: number, indent = '  '): string {
+  return Array.from(
+    { length: count },
+    (_, i) => `${indent}<div class="${kind}">${i === 0 ? '|' : ''}</div>`,
+  ).join('\n');
 }
 
 function family(kind: 'columns' | 'cards', count: number, useGrid: boolean): LayoutEntry {
@@ -124,7 +136,7 @@ function family(kind: 'columns' | 'cards', count: number, useGrid: boolean): Lay
     keywords: [...words, `${count}`, 'grid', 'flex'],
     // Grid needs a rule per column count; flexbox does not, so the class does
     // not need the count either.
-    html: `<div class="${kind}${useGrid ? ` ${kind}-${count}` : ''}">\n${children(count)}\n</div>`,
+    html: `<div class="${kind}${useGrid ? ` ${kind}-${count}` : ''}">\n${children(kind === 'columns' ? 'column' : 'card', count)}\n</div>`,
     css: useGrid ? [gridBase, track(`.${kind}-${count}`, count)] : [flexBase],
   };
 }
