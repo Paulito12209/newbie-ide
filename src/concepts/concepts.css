@@ -19,13 +19,13 @@
   display: flex;
   flex-direction: column;
   width: 290px;
-  background: #fff;
-  border: 1px solid #999;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 2px 8px var(--shadow);
   font-family: var(--font-ui);
   font-size: 12px;
   line-height: 1.4;
-  color: #111;
+  color: var(--fg);
   white-space: normal;
   text-align: left;
   cursor: default;
@@ -38,10 +38,10 @@
 
 .sl-row {
   padding: 6px 8px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--line);
 }
 
-.sl-row.sl-active { background: #e9e9e9; }
+.sl-row.sl-active { background: var(--surface-2); }
 
 .sl-head {
   display: flex;
@@ -55,13 +55,13 @@
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.06em;
-  color: #555;
-  border: 1px solid #ccc;
+  color: var(--muted);
+  border: 1px solid var(--line);
   padding: 0 3px;
 }
 
 .sl-desc {
-  color: #666;
+  color: var(--muted);
   margin-top: 2px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -70,13 +70,13 @@
   overflow: hidden;
 }
 
-.sl-empty { padding: 8px; color: #666; }
+.sl-empty { padding: 8px; color: var(--muted); }
 
 .sl-foot {
   padding: 5px 8px;
-  background: #fafafa;
-  border-top: 1px solid #eee;
-  color: #888;
+  background: var(--surface-2);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
   font-size: 11px;
 }
 
@@ -85,8 +85,8 @@
 .sl-card {
   max-width: 470px;
   margin: 6px 0 8px 4px;
-  border: 1px solid #999;
-  background: #fff;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
   font-family: var(--font-ui);
   font-size: 12px;
   line-height: 1.5;
@@ -96,24 +96,24 @@
 
 .sl-card .sl-head {
   padding: 6px 8px;
-  background: #fafafa;
-  border-bottom: 1px solid #e4e4e4;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
 }
 
 .sl-close {
   margin-left: auto;
   font: inherit;
   font-size: 11px;
-  color: #444;
-  background: #fff;
-  border: 1px solid #ccc;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--line);
   padding: 0 6px;
   cursor: pointer;
 }
 
 .sl-summary {
   margin: 8px;
-  color: #333;
+  color: var(--fg);
 }
 
 /* --- demo scaffolding ---------------------------------------------------- */
@@ -125,14 +125,14 @@
   gap: 10px;
   margin: 0 8px 10px;
   padding: 12px;
-  border: 1px solid #e4e4e4;
-  background: #fbfbfb;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
   font-family: var(--font-mono);
   font-size: 11px;
-  color: #222;
+  color: var(--fg);
 }
 
-.cd-hint { font-family: var(--font-ui); color: #666; }
+.cd-hint { font-family: var(--font-ui); color: var(--muted); }
 
 /* One label visible at a time, in step with the highlight above it. */
 .cd-cycle {
@@ -141,7 +141,7 @@
   width: var(--w);
   height: 1.3em;
   vertical-align: bottom;
-  color: #555;
+  color: var(--muted);
 }
 
 .cd-cycle > * {
@@ -161,8 +161,8 @@
 @keyframes cdCycle3 { 0%, 30% { opacity: 1; } 34%, 100% { opacity: 0; } }
 @keyframes cdCycle4 { 0%, 22% { opacity: 1; } 26%, 100% { opacity: 0; } }
 
-@keyframes cdMark2 { 0%, 46% { background: #dcdcdc; } 50%, 100% { background: transparent; } }
-@keyframes cdMark3 { 0%, 30% { background: #dcdcdc; } 34%, 100% { background: transparent; } }
+@keyframes cdMark2 { 0%, 46% { background: var(--fill-strong); } 50%, 100% { background: transparent; } }
+@keyframes cdMark3 { 0%, 30% { background: var(--fill-strong); } 34%, 100% { background: transparent; } }
 
 /* --- HTML demos ---------------------------------------------------------- */
 
@@ -177,8 +177,8 @@
 
 .cd-nesting .cd-nest {
   padding: 7px 9px;
-  border: 1px solid #bbb;
-  background: #fff;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
   animation: cdAppear 3.6s infinite both;
   animation-delay: calc(var(--i) * 1.2s);
 }
@@ -188,7 +188,7 @@
   margin-bottom: 5px;
   font-style: normal;
   font-size: 10px;
-  color: #777;
+  color: var(--muted);
 }
 
 @keyframes cdAppear {
@@ -202,42 +202,42 @@
 
 .cd-selector .cd-target {
   padding: 2px 6px;
-  border: 1px solid #ccc;
-  background: #fff;
+  border: 1px solid var(--line);
+  background: var(--surface);
 }
 
 .cd-selector .cd-m-a { animation: cdMatchA 2.4s infinite; }
 .cd-selector .cd-m-b { animation: cdMatchB 2.4s infinite; }
 
 @keyframes cdMatchA {
-  0%, 46% { background: #dcdcdc; border-color: #666; }
-  50%, 100% { background: #fff; border-color: #ccc; }
+  0%, 46% { background: var(--fill-strong); border-color: var(--muted); }
+  50%, 100% { background: var(--surface); border-color: var(--line); }
 }
 
 @keyframes cdMatchB {
-  0%, 46% { background: #fff; border-color: #ccc; }
-  50%, 96% { background: #dcdcdc; border-color: #666; }
-  100% { background: #fff; border-color: #ccc; }
+  0%, 46% { background: var(--surface); border-color: var(--line); }
+  50%, 96% { background: var(--fill-strong); border-color: var(--muted); }
+  100% { background: var(--surface); border-color: var(--line); }
 }
 
 .cd-boxmodel .cd-l {
   padding: 6px 8px;
-  border: 1px dashed #c4c4c4;
+  border: 1px dashed var(--border-strong);
 }
 
 .cd-boxmodel .cd-l > i {
   font-style: normal;
   font-size: 9px;
-  color: #888;
+  color: var(--muted);
 }
 
-.cd-boxmodel .cd-l-border { border: 2px solid #666; }
+.cd-boxmodel .cd-l-border { border: 2px solid var(--border-strong); }
 .cd-boxmodel .cd-l-padding { animation: cdPad 3s ease-in-out infinite alternate; }
 
 .cd-boxmodel .cd-l-content {
   padding: 6px 10px;
-  background: #e2e2e2;
-  border: 1px solid #ccc;
+  background: var(--fill-strong);
+  border: 1px solid var(--line);
 }
 
 @keyframes cdPad {
@@ -255,12 +255,12 @@
   flex: 1 1 0;
   padding: 6px 0;
   text-align: center;
-  border: 1px solid #999;
-  background: #eee;
+  border: 1px solid var(--border-strong);
+  background: var(--fill);
 }
 
 .cd-flexbox .cd-grow {
-  background: #d6d6d6;
+  background: var(--fill-strong);
   animation: cdGrow 3s ease-in-out infinite alternate;
 }
 
@@ -277,7 +277,7 @@
   display: block;
   width: 14px;
   height: 14px;
-  background: #555;
+  background: var(--muted);
 }
 
 .cd-transition .cd-jump { animation: cdSlide 2.4s steps(1, end) infinite; }
@@ -287,7 +287,7 @@
   margin-left: auto;
   font-style: normal;
   font-family: var(--font-ui);
-  color: #777;
+  color: var(--muted);
 }
 
 @keyframes cdSlide {
@@ -307,14 +307,14 @@
 .cd-variable code {
   white-space: nowrap;
   padding: 1px 5px;
-  background: #eee;
-  border: 1px solid #ddd;
+  background: var(--fill);
+  border: 1px solid var(--line);
 }
 
 .cd-variable em {
   font-style: normal;
   font-family: var(--font-ui);
-  color: #777;
+  color: var(--muted);
 }
 
 .cd-variable .cd-locked { animation: cdShake 3.6s infinite; }
@@ -330,7 +330,7 @@
 
 @keyframes cdStrike {
   0%, 62% { text-decoration-color: transparent; }
-  70%, 94% { text-decoration-color: #555; }
+  70%, 94% { text-decoration-color: var(--muted); }
   100% { text-decoration-color: transparent; }
 }
 
@@ -342,16 +342,16 @@
 
 .cd-function .cd-fn {
   padding: 4px 8px;
-  border: 1px solid #666;
-  background: #eee;
+  border: 1px solid var(--border-strong);
+  background: var(--fill);
 }
 
 .cd-function .cd-token {
   width: 22px;
   padding: 2px 0;
   text-align: center;
-  border: 1px solid #999;
-  background: #fff;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
 }
 
 .cd-function .cd-in { animation: cdIn 3s infinite; }
@@ -378,14 +378,14 @@
 .cd-event .cd-btn {
   position: relative;
   padding: 3px 8px;
-  border: 1px solid #666;
-  background: #eee;
+  border: 1px solid var(--border-strong);
+  background: var(--fill);
 }
 
 .cd-event .cd-ripple {
   position: absolute;
   inset: 0;
-  border: 2px solid #666;
+  border: 2px solid var(--border-strong);
   opacity: 0;
   animation: cdRipple 3s infinite;
 }
@@ -400,7 +400,7 @@
   position: relative;
   width: 70px;
   height: 2px;
-  background: #ddd;
+  background: var(--line);
 }
 
 .cd-event .cd-wire i {
@@ -408,7 +408,7 @@
   top: -3px;
   width: 8px;
   height: 8px;
-  background: #555;
+  background: var(--muted);
   opacity: 0;
   animation: cdTravel 3s infinite;
 }
@@ -423,15 +423,15 @@
 .cd-event .cd-handler {
   white-space: nowrap;
   padding: 3px 8px;
-  border: 1px solid #999;
+  border: 1px solid var(--border-strong);
   font-family: var(--font-ui);
   animation: cdFlash 3s infinite;
 }
 
 @keyframes cdFlash {
-  0%, 45% { background: #fff; }
-  54%, 76% { background: #d9d9d9; }
-  86%, 100% { background: #fff; }
+  0%, 45% { background: var(--surface); }
+  54%, 76% { background: var(--fill-strong); }
+  86%, 100% { background: var(--surface); }
 }
 
 .cd-loop .cd-cells {
@@ -444,8 +444,8 @@
   display: block;
   width: 24px;
   height: 24px;
-  border: 1px solid #ccc;
-  background: #fff;
+  border: 1px solid var(--line);
+  background: var(--surface);
 }
 
 .cd-loop .cd-marker {
@@ -454,7 +454,7 @@
   top: 0;
   width: 24px;
   height: 24px;
-  border: 2px solid #333;
+  border: 2px solid var(--fg);
   animation: cdMarch 4.8s steps(4, end) infinite;
 }
 

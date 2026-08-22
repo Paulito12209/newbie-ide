@@ -5,6 +5,11 @@
 
 export type LangId = 'html' | 'css' | 'js';
 
+/** 'system' follows prefers-color-scheme; the others override it. */
+export type ThemeMode = 'system' | 'light' | 'dark';
+
+const THEMES: readonly ThemeMode[] = ['system', 'light', 'dark'];
+
 export const LANGS: readonly LangId[] = ['html', 'css', 'js'];
 
 export interface Session {
@@ -14,6 +19,7 @@ export interface Session {
   active: LangId;
   /** Editor pane width as a percentage of the window. */
   split: number;
+  theme: ThemeMode;
 }
 
 const STORAGE_KEY = 'slashlearn.session.v1';
@@ -48,6 +54,7 @@ const DEFAULT_SESSION: Session = {
   ].join('\n'),
   active: 'html',
   split: 50,
+  theme: 'system',
 };
 
 function read(): Session {
@@ -61,6 +68,7 @@ function read(): Session {
       js: typeof parsed.js === 'string' ? parsed.js : DEFAULT_SESSION.js,
       active: LANGS.includes(parsed.active as LangId) ? (parsed.active as LangId) : 'html',
       split: typeof parsed.split === 'number' && parsed.split > 0 ? parsed.split : DEFAULT_SESSION.split,
+      theme: THEMES.includes(parsed.theme as ThemeMode) ? (parsed.theme as ThemeMode) : 'system',
     };
   } catch {
     // Corrupt or unavailable storage must never stop the editor from booting.

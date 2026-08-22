@@ -12,7 +12,9 @@ import { prefetchLanguages } from './editor/languages';
 import { createPreview } from './preview/bridge';
 import type { PreviewError } from './preview/bridge';
 import { MOBILE_QUERY, createMobilePanes } from './ui/mobile';
+import { createMenuBar } from './ui/menubar';
 import { createSplitter } from './ui/splitter';
+import { applyTheme } from './ui/theme';
 import { createStatus } from './ui/status';
 import { createTabs } from './ui/tabs';
 import type { LangId } from './state';
@@ -22,11 +24,24 @@ import { persist, persistNow, session } from './state';
 const REBUILD_DEBOUNCE = 250;
 
 const app = document.getElementById('app') as HTMLElement;
+const menubarHost = document.getElementById('menubar') as HTMLElement;
 const editorHost = document.getElementById('editor-host') as HTMLElement;
 const tabsHost = document.getElementById('tabs') as HTMLElement;
 const splitterHandle = document.getElementById('splitter') as HTMLElement;
 const iframe = document.getElementById('preview') as HTMLIFrameElement;
 const statusBar = document.getElementById('status') as HTMLElement;
+
+// Before anything renders: the inline script in index.html has already set the
+// attribute, this keeps the module the single source of truth afterwards.
+applyTheme(session.theme);
+
+createMenuBar(menubarHost, {
+  theme: session.theme,
+  onThemeChange: (mode) => {
+    session.theme = mode;
+    persist();
+  },
+});
 
 const status = createStatus(statusBar);
 

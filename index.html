@@ -3,9 +3,24 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
     <title>Slashlearn</title>
+    <script>
+      // Runs before first paint so an explicit theme choice never flashes the
+      // other one. The storage key is duplicated from src/state.ts on purpose:
+      // this has to work before any module is fetched.
+      try {
+        var saved = JSON.parse(localStorage.getItem('slashlearn.session.v1') || '{}');
+        if (saved.theme === 'dark' || saved.theme === 'light') {
+          document.documentElement.dataset.theme = saved.theme;
+        }
+      } catch (e) {
+        /* no stored session, or storage unavailable: fall back to the system theme */
+      }
+    </script>
   </head>
   <body>
+    <header id="menubar"></header>
     <main id="app">
       <section id="pane-editor">
         <div id="tabs" role="tablist" aria-label="Files"></div>

@@ -31,20 +31,20 @@ branches get preview URLs.
 Produced by `npm run build && npm run size` (gzip level 9):
 
 ```
-  332.93 KB raw    108.45 KB gzip  initial  assets/index-*.js
+  334.08 KB raw    108.75 KB gzip  initial  assets/index-*.js
    76.43 KB raw     30.19 KB gzip  lazy     assets/js-*.js
    16.92 KB raw      8.01 KB gzip  lazy     assets/css-*.js
     8.42 KB raw      3.28 KB gzip  lazy     assets/concepts-*.js
-    7.03 KB raw      1.96 KB gzip  lazy     assets/concepts-*.css
-    2.39 KB raw      1.01 KB gzip  initial  assets/index-*.css
-    0.90 KB raw      0.44 KB gzip  initial  index.html
+    7.69 KB raw      1.94 KB gzip  lazy     assets/concepts-*.css
+    4.50 KB raw      1.52 KB gzip  initial  assets/index-*.css
+    1.57 KB raw      0.76 KB gzip  initial  index.html
 ----------------------------------------------------------------
-initial (cold load): 109.89 KB gzip
-lazy (on demand):     43.44 KB gzip
-total:               153.33 KB gzip
+initial (cold load): 111.03 KB gzip
+lazy (on demand):     43.42 KB gzip
+total:               154.45 KB gzip
 ```
 
-**153.33 KB gzipped total**, of which **109.89 KB** is fetched on cold load.
+**154.45 KB gzipped total**, of which **111.03 KB** is fetched on cold load.
 Budget was 400 KB.
 
 ## The two preview paths
@@ -91,6 +91,35 @@ Production build over localhost: **first contentful paint 72 ms, load event
 122 ms**. The CSS and JS grammars are separate chunks, not preloaded, requested
 from an idle callback after the `load` event, and measured starting at 129 ms:
 strictly after first paint. Only the HTML mode is in the entry chunk.
+
+## Menu bar and theming
+
+One narrow row above the panes - 44px, well inside the 64px ceiling. App name on
+the left, an actions group on the right; today that group holds the theme
+control and it is where later actions go.
+
+The theme button cycles **Auto - Light - Dark**. Auto stamps nothing on the
+document and lets `prefers-color-scheme` decide; the other two set `data-theme`
+on `<html>` and win over the system setting in both directions. The choice is
+part of the saved session.
+
+Every colour in the app is a CSS custom property, so the switch is one attribute
+change - no second theme object, no CodeMirror `Compartment`, no reconfiguring
+live editor states. The editor theme and highlight style resolve `var(--syn-*)`,
+and the slash menu, concept cards and their animated demos read the same tokens.
+An inline script in `index.html` applies a stored choice before first paint, so
+picking dark on a light system never flashes white on reload.
+
+Contrast was measured rather than eyeballed, in both themes: every syntax token,
+the line-number gutter, the status bar and inactive tabs clear WCAG AA (4.5:1).
+The worst case is 4.61:1 (comments, light). Two colours were adjusted after
+measuring - the gutter sat at 2.73:1 light and 3.44:1 dark, and light comments at
+3.46:1.
+
+The preview iframe stays white in both themes. It shows the user's own page, and
+an unstyled page really is white - tinting it would misreport their CSS. On
+mobile that means the 24px peek strip is a white sliver against dark chrome,
+which is the honest reading of "your page is over there".
 
 ## Mobile layout
 
@@ -147,7 +176,7 @@ src/
     bridge.ts          the only module that talks to the iframe
     runtime.ts         the script that runs inside the iframe
   ui/
-    tabs.ts  splitter.ts  mobile.ts  status.ts
+    menubar.ts  theme.ts  tabs.ts  splitter.ts  mobile.ts  status.ts
 ```
 
 The editor knows nothing about the preview, and the preview knows nothing about
