@@ -1,0 +1,173 @@
+/* Deliberately unstyled: black / white / grey, system font. Visual design is out of scope. */
+:root {
+  --split: 50%;
+  --bg: #ffffff;
+  --fg: #111111;
+  --muted: #666666;
+  --line: #d4d4d4;
+  --chrome: #f2f2f2;
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 13px;
+}
+
+#app {
+  display: grid;
+  grid-template-columns: var(--split) 5px 1fr;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+#pane-editor,
+#pane-preview {
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+}
+
+#pane-editor { grid-template-rows: 29px 1fr; }
+#pane-preview { grid-template-rows: 1fr 22px; }
+
+#tabs {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+  background: var(--chrome);
+}
+
+#tabs button {
+  appearance: none;
+  border: 0;
+  border-right: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+#tabs button[aria-selected='true'] {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+#editor-host {
+  min-height: 0;
+  overflow: hidden;
+}
+
+#editor-host .cm-editor { height: 100%; }
+#editor-host .cm-editor.cm-focused { outline: none; }
+
+#splitter {
+  background: var(--line);
+  cursor: col-resize;
+  touch-action: none;
+}
+
+#splitter:focus-visible { outline: 2px solid var(--fg); outline-offset: -2px; }
+
+/* Kill iframe hit-testing while dragging so pointer capture is not stolen. */
+#app[data-dragging='true'] iframe { pointer-events: none; }
+#app[data-dragging='true'] { user-select: none; }
+
+#preview {
+  border: 0;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  border-left: 1px solid var(--line);
+}
+
+#status {
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  background: var(--chrome);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 21px;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#status[data-kind='error'] { color: #111111; background: #e6e6e6; }
+
+/* --- mobile -----------------------------------------------------------------
+   One pane at a time on a sliding track. The editor takes the whole viewport
+   except a --peek strip on the right, where the live preview stays visible and
+   doubles as the handle: tap it or swipe it across. Keep the query in sync with
+   MOBILE_QUERY in src/ui/mobile.ts. */
+
+@media (max-width: 767px) {
+  #app {
+    --peek: 24px;
+    --slide: 0px;
+    display: flex;
+    grid-template-columns: none;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #pane-editor,
+  #pane-preview {
+    flex: 0 0 calc(100% - var(--peek));
+    transform: translateX(var(--slide));
+    transition: transform 0.28s cubic-bezier(0.2, 0, 0, 1);
+    will-change: transform;
+  }
+
+  #app[data-dragging='true'] #pane-editor,
+  #app[data-dragging='true'] #pane-preview {
+    transition: none;
+  }
+
+  /* Sits on top of whichever pane edge is currently peeking. */
+  #splitter {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: auto;
+    width: var(--peek);
+    z-index: 5;
+    background: transparent;
+    cursor: pointer;
+    touch-action: none;
+  }
+
+  #app[data-mobile-view='preview'] #splitter {
+    right: auto;
+    left: 0;
+  }
+
+  /* Grip, so the strip reads as something you can grab. */
+  #splitter::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 3px;
+    height: 30px;
+    margin: -15px 0 0 -1.5px;
+    background: #b4b4b4;
+  }
+
+  #preview { border-left: 1px solid #999999; }
+
+  #status {
+    border-left: 0;
+    padding-left: 28px;
+  }
+}

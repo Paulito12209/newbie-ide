@@ -1,0 +1,475 @@
+/* Slash menu and concept cards. Greyscale, like the rest of the shell.
+   Every demo animates in pure CSS: an open card runs no script and no timer. */
+
+/* --- menu ---------------------------------------------------------------- */
+
+.sl-anchor {
+  position: relative;
+  display: inline-block;
+  width: 0;
+  height: 0;
+  vertical-align: baseline;
+}
+
+.sl-menu {
+  position: absolute;
+  top: 1.6em;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  width: 290px;
+  background: #fff;
+  border: 1px solid #999;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.4;
+  color: #111;
+  white-space: normal;
+  text-align: left;
+  cursor: default;
+}
+
+.sl-list {
+  max-height: 216px;
+  overflow-y: auto;
+}
+
+.sl-row {
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.sl-row.sl-active { background: #e9e9e9; }
+
+.sl-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.sl-title { font-weight: 600; }
+
+.sl-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: #555;
+  border: 1px solid #ccc;
+  padding: 0 3px;
+}
+
+.sl-desc {
+  color: #666;
+  margin-top: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sl-empty { padding: 8px; color: #666; }
+
+.sl-foot {
+  padding: 5px 8px;
+  background: #fafafa;
+  border-top: 1px solid #eee;
+  color: #888;
+  font-size: 11px;
+}
+
+/* --- card ---------------------------------------------------------------- */
+
+.sl-card {
+  max-width: 470px;
+  margin: 6px 0 8px 4px;
+  border: 1px solid #999;
+  background: #fff;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: normal;
+  cursor: default;
+}
+
+.sl-card .sl-head {
+  padding: 6px 8px;
+  background: #fafafa;
+  border-bottom: 1px solid #e4e4e4;
+}
+
+.sl-close {
+  margin-left: auto;
+  font: inherit;
+  font-size: 11px;
+  color: #444;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 0 6px;
+  cursor: pointer;
+}
+
+.sl-summary {
+  margin: 8px;
+  color: #333;
+}
+
+/* --- demo scaffolding ---------------------------------------------------- */
+
+.cd {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 8px 10px;
+  padding: 12px;
+  border: 1px solid #e4e4e4;
+  background: #fbfbfb;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #222;
+}
+
+.cd-hint { font-family: var(--font-ui); color: #666; }
+
+/* One label visible at a time, in step with the highlight above it. */
+.cd-cycle {
+  position: relative;
+  display: inline-block;
+  width: var(--w);
+  height: 1.3em;
+  vertical-align: bottom;
+  color: #555;
+}
+
+.cd-cycle > * {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.cd-cycle-2 > * { animation: cdCycle2 2.4s infinite; }
+.cd-cycle-3 > * { animation: cdCycle3 3.6s infinite; }
+.cd-cycle-4 > * { animation: cdCycle4 4.8s infinite; }
+.cd-cycle > * { animation-delay: calc(var(--i) * 1.2s); }
+
+@keyframes cdCycle2 { 0%, 46% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes cdCycle3 { 0%, 30% { opacity: 1; } 34%, 100% { opacity: 0; } }
+@keyframes cdCycle4 { 0%, 22% { opacity: 1; } 26%, 100% { opacity: 0; } }
+
+@keyframes cdMark2 { 0%, 46% { background: #dcdcdc; } 50%, 100% { background: transparent; } }
+@keyframes cdMark3 { 0%, 30% { background: #dcdcdc; } 34%, 100% { background: transparent; } }
+
+/* --- HTML demos ---------------------------------------------------------- */
+
+.cd-element .cd-part,
+.cd-attribute .cd-part {
+  padding: 1px 2px;
+  animation-delay: calc(var(--i) * 1.2s);
+}
+
+.cd-element .cd-part { animation: cdMark3 3.6s infinite; }
+.cd-attribute .cd-part { animation: cdMark2 2.4s infinite; }
+
+.cd-nesting .cd-nest {
+  padding: 7px 9px;
+  border: 1px solid #bbb;
+  background: #fff;
+  animation: cdAppear 3.6s infinite both;
+  animation-delay: calc(var(--i) * 1.2s);
+}
+
+.cd-nesting .cd-nest > i {
+  display: block;
+  margin-bottom: 5px;
+  font-style: normal;
+  font-size: 10px;
+  color: #777;
+}
+
+@keyframes cdAppear {
+  0% { opacity: 0.15; }
+  12%, 100% { opacity: 1; }
+}
+
+/* --- CSS demos ----------------------------------------------------------- */
+
+.cd-selector .cd-targets { display: flex; gap: 6px; }
+
+.cd-selector .cd-target {
+  padding: 2px 6px;
+  border: 1px solid #ccc;
+  background: #fff;
+}
+
+.cd-selector .cd-m-a { animation: cdMatchA 2.4s infinite; }
+.cd-selector .cd-m-b { animation: cdMatchB 2.4s infinite; }
+
+@keyframes cdMatchA {
+  0%, 46% { background: #dcdcdc; border-color: #666; }
+  50%, 100% { background: #fff; border-color: #ccc; }
+}
+
+@keyframes cdMatchB {
+  0%, 46% { background: #fff; border-color: #ccc; }
+  50%, 96% { background: #dcdcdc; border-color: #666; }
+  100% { background: #fff; border-color: #ccc; }
+}
+
+.cd-boxmodel .cd-l {
+  padding: 6px 8px;
+  border: 1px dashed #c4c4c4;
+}
+
+.cd-boxmodel .cd-l > i {
+  font-style: normal;
+  font-size: 9px;
+  color: #888;
+}
+
+.cd-boxmodel .cd-l-border { border: 2px solid #666; }
+.cd-boxmodel .cd-l-padding { animation: cdPad 3s ease-in-out infinite alternate; }
+
+.cd-boxmodel .cd-l-content {
+  padding: 6px 10px;
+  background: #e2e2e2;
+  border: 1px solid #ccc;
+}
+
+@keyframes cdPad {
+  from { padding: 6px 8px; }
+  to { padding: 16px 22px; }
+}
+
+.cd-flexbox .cd-flex {
+  display: flex;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.cd-flexbox .cd-flex > span {
+  flex: 1 1 0;
+  padding: 6px 0;
+  text-align: center;
+  border: 1px solid #999;
+  background: #eee;
+}
+
+.cd-flexbox .cd-grow {
+  background: #d6d6d6;
+  animation: cdGrow 3s ease-in-out infinite alternate;
+}
+
+@keyframes cdGrow { from { flex-grow: 1; } to { flex-grow: 3; } }
+
+.cd-transition .cd-track {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+}
+
+.cd-transition .cd-dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  background: #555;
+}
+
+.cd-transition .cd-jump { animation: cdSlide 2.4s steps(1, end) infinite; }
+.cd-transition .cd-ease { animation: cdSlide 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+
+.cd-transition em {
+  margin-left: auto;
+  font-style: normal;
+  font-family: var(--font-ui);
+  color: #777;
+}
+
+@keyframes cdSlide {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(90px); }
+  100% { transform: translateX(0); }
+}
+
+/* --- JS demos ------------------------------------------------------------ */
+
+.cd-variable .cd-var {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cd-variable code {
+  white-space: nowrap;
+  padding: 1px 5px;
+  background: #eee;
+  border: 1px solid #ddd;
+}
+
+.cd-variable em {
+  font-style: normal;
+  font-family: var(--font-ui);
+  color: #777;
+}
+
+.cd-variable .cd-locked { animation: cdShake 3.6s infinite; }
+.cd-variable .cd-locked b { animation: cdStrike 3.6s infinite; text-decoration: line-through; }
+
+@keyframes cdShake {
+  0%, 60% { transform: translateX(0); }
+  66% { transform: translateX(-3px); }
+  72% { transform: translateX(3px); }
+  78% { transform: translateX(-2px); }
+  84%, 100% { transform: translateX(0); }
+}
+
+@keyframes cdStrike {
+  0%, 62% { text-decoration-color: transparent; }
+  70%, 94% { text-decoration-color: #555; }
+  100% { text-decoration-color: transparent; }
+}
+
+.cd-function .cd-pipe {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cd-function .cd-fn {
+  padding: 4px 8px;
+  border: 1px solid #666;
+  background: #eee;
+}
+
+.cd-function .cd-token {
+  width: 22px;
+  padding: 2px 0;
+  text-align: center;
+  border: 1px solid #999;
+  background: #fff;
+}
+
+.cd-function .cd-in { animation: cdIn 3s infinite; }
+.cd-function .cd-out { animation: cdOut 3s infinite; }
+
+@keyframes cdIn {
+  0% { opacity: 0; transform: translateX(-14px); }
+  15%, 45% { opacity: 1; transform: translateX(0); }
+  58%, 100% { opacity: 0; transform: translateX(16px); }
+}
+
+@keyframes cdOut {
+  0%, 55% { opacity: 0; transform: translateX(-16px); }
+  70%, 92% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+
+.cd-event .cd-evt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cd-event .cd-btn {
+  position: relative;
+  padding: 3px 8px;
+  border: 1px solid #666;
+  background: #eee;
+}
+
+.cd-event .cd-ripple {
+  position: absolute;
+  inset: 0;
+  border: 2px solid #666;
+  opacity: 0;
+  animation: cdRipple 3s infinite;
+}
+
+@keyframes cdRipple {
+  0% { opacity: 0.9; transform: scale(1); }
+  22% { opacity: 0; transform: scale(1.35); }
+  100% { opacity: 0; transform: scale(1.35); }
+}
+
+.cd-event .cd-wire {
+  position: relative;
+  width: 70px;
+  height: 2px;
+  background: #ddd;
+}
+
+.cd-event .cd-wire i {
+  position: absolute;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  background: #555;
+  opacity: 0;
+  animation: cdTravel 3s infinite;
+}
+
+@keyframes cdTravel {
+  0%, 18% { opacity: 0; left: 0; }
+  22% { opacity: 1; left: 0; }
+  45% { opacity: 1; left: 62px; }
+  50%, 100% { opacity: 0; left: 62px; }
+}
+
+.cd-event .cd-handler {
+  white-space: nowrap;
+  padding: 3px 8px;
+  border: 1px solid #999;
+  font-family: var(--font-ui);
+  animation: cdFlash 3s infinite;
+}
+
+@keyframes cdFlash {
+  0%, 45% { background: #fff; }
+  54%, 76% { background: #d9d9d9; }
+  86%, 100% { background: #fff; }
+}
+
+.cd-loop .cd-cells {
+  position: relative;
+  display: flex;
+  gap: 8px;
+}
+
+.cd-loop .cd-cells span {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #ccc;
+  background: #fff;
+}
+
+.cd-loop .cd-marker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #333;
+  animation: cdMarch 4.8s steps(4, end) infinite;
+}
+
+@keyframes cdMarch {
+  from { transform: translateX(0); }
+  to { transform: translateX(128px); }
+}
+
+/* Motion is the explanation here, so reduced motion shows the first frame
+   rather than an empty box. */
+@media (prefers-reduced-motion: reduce) {
+  .cd,
+  .cd * {
+    animation: none !important;
+  }
+
+  .cd-cycle > *:first-child { opacity: 1; }
+}

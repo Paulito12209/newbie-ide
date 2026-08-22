@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Slashlearn</title>
+  </head>
+  <body>
+    <main id="app">
+      <section id="pane-editor">
+        <div id="tabs" role="tablist" aria-label="Files"></div>
+        <div id="editor-host"></div>
+      </section>
+      <div
+        id="splitter"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize editor and preview"
+        tabindex="0"
+      ></div>
+      <section id="pane-preview">
+        <iframe id="preview" title="Preview" sandbox="allow-scripts"></iframe>
+        <div id="status" role="status" aria-live="polite"></div>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
