@@ -15,7 +15,10 @@ import type { FileDoc, LangId } from '../state';
 import { closeBrackets } from './close-brackets';
 import { conceptHost } from './concept-hook';
 import { loadLanguage, peekLanguage } from './languages';
+import { lineMenu } from './line-menu';
 import { editableSlots } from './slots';
+import { touchGestures } from './touch-gestures';
+import { MOBILE_QUERY } from '../ui/mobile';
 import { theme } from './theme';
 
 export interface EditorOptions {
@@ -68,6 +71,13 @@ export function createEditor(parent: HTMLElement, options: EditorOptions): Edito
         theme,
         compartment.of(mode ?? []),
         editableSlots(file.kind),
+        lineMenu(),
+        touchGestures(),
+        // Keep a line of room below the caret, so it is never the last visible
+        // line above the keyboard.
+        EditorView.scrollMargins.of((view) =>
+          window.matchMedia(MOBILE_QUERY).matches ? { bottom: view.defaultLineHeight } : null,
+        ),
         conceptHost(file.kind),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) options.onDocChanged(file.id, update.state.doc);

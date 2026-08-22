@@ -215,6 +215,52 @@ The chip is 8px, but its hit area is 22px tall and reaches 5px past each side.
 That gap is the point: the mark stays small enough to read as code, while the
 thing your thumb has to hit is not.
 
+## Line actions
+
+One dots button, 40px past the end of a single line - the line you are working
+on. Which line that is depends on how you are pointing: **on mobile it follows
+the caret**, because the active line is the one you are in and there is no hover
+on a touch screen; **on desktop it follows the mouse**, because hovering is how
+you say "this line" without clicking into it. Blank lines get nothing.
+
+It opens three actions:
+
+- **Copy line** - the line without its indentation
+- **Delete line** - takes the line break with it, so no blank line is left
+- **Clone line** - a count with chevron steppers either side of it and an
+  `+ Add` button. The traffic-light case: you want the same element three times
+  and typing it out on a phone is the whole problem.
+
+The steppers sit side by side rather than stacked, because a stacked spinner
+gives each arrow about 17px of height, which is not a touch target. The count
+input is 16px for the same iOS reason as the rename dialog.
+
+## Typing with a keyboard up
+
+Two things go wrong on a phone the moment the on-screen keyboard appears: the
+line you are typing on ends up underneath it, and the slash menu opens downwards
+into a region that no longer exists.
+
+- The shell is sized to `visualViewport`, so the layout knows how much room is
+  actually left. The file bar and the floating switch hide while the keyboard is
+  up - they were competing with the code for the few lines that remain.
+- CodeMirror gets a `scrollMargins` bottom of one line, so the caret is never
+  the last visible line; there is always a line of context under it.
+- The slash menu measures the room above and below the cursor and flips upwards
+  when there is more room there, growing toward the top of the screen. Measured
+  with the caret on the last line of a 640px window: the menu occupied 72-620px,
+  entirely inside the pane.
+
+## Touch gestures
+
+A **double tap selects the word or value** under your finger, so the next
+keystroke replaces it.
+
+Single tap is deliberately left alone: it is also how you place the caret, so
+copying or selecting on every tap would fire at you constantly. Line-level
+actions live in the dots menu rather than in a hidden gesture - a gesture you
+have to discover is worse than a button you can see.
+
 ## Error handling
 
 `window.onerror` and `unhandledrejection` are caught inside the iframe and
@@ -240,6 +286,8 @@ src/
     concept-hook.ts    extension point for the concept-teaching layer
     close-brackets.ts  minimal auto-closing brackets
     slots.ts           tappable targets at editable positions
+    line-menu.ts       the dots at the end of the current line
+    touch-gestures.ts  double tap to select a word
     languages.ts       mode registry, lazy loading, prefetch
     lang/{html,css,js}.ts
     theme.ts           plain light theme + highlight style
@@ -247,7 +295,8 @@ src/
     bridge.ts          the only module that talks to the iframe
     runtime.ts         the script that runs inside the iframe
   ui/
-    tabs.ts  drawer.ts  dialog.ts  icons.ts  menubar.ts  theme.ts
+    tabs.ts  drawer.ts  dialog.ts  line-actions.ts  icons.ts
+    keyboard.ts  toast.ts  clipboard.ts  menubar.ts  theme.ts
     splitter.ts  mobile.ts  status.ts
 ```
 

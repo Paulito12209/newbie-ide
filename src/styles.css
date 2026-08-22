@@ -417,6 +417,141 @@ body {
 
 .sl-options-item:hover { background: var(--surface-2); }
 
+/* --- line actions ------------------------------------------------------------
+   The dots sit 40px past the end of a line that finishes a tag. Mobile only:
+   above the breakpoint a mouse makes both actions trivial already. */
+
+.cm-line-menu {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 40px;
+  padding: 2px 6px;
+  color: var(--muted);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.sl-line-menu {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  padding: 4px;
+  min-width: 210px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.sl-line-item {
+  display: block;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  color: var(--fg);
+  background: transparent;
+  border: 0;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.sl-line-item:hover { background: var(--surface-2); }
+
+.sl-line-danger { color: var(--syn-invalid); }
+
+.sl-line-clone {
+  border-top: 1px solid var(--line);
+  padding: 10px 12px 8px;
+}
+
+.sl-line-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+}
+
+.sl-line-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.sl-line-count {
+  width: 58px;
+  text-align: center;
+  appearance: textfield;
+  font: inherit;
+  /* 16px or iOS zooms the page the moment it takes focus. */
+  font-size: 16px;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.sl-line-count::-webkit-outer-spin-button,
+.sl-line-count::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.sl-line-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  flex: 0 0 auto;
+  color: var(--fg);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.sl-line-step:hover { background: var(--fill-strong); }
+
+.sl-line-add {
+  flex: 1;
+  font: inherit;
+  color: var(--fg);
+  background: var(--fill-strong);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+/* --- toast ------------------------------------------------------------------ */
+
+.sl-toast {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translate(-50%, -8px);
+  z-index: 40;
+  max-width: calc(100vw - 32px);
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: rgba(20, 21, 23, 0.92);
+  color: #f2f2f2;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.16s, transform 0.16s;
+}
+
+.sl-toast[data-visible='true'] {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
 /* --- file drawer ------------------------------------------------------------
    Three quarters of the screen, in from the right, listing the files top to
    bottom. */
@@ -542,6 +677,19 @@ body {
  #pane-fab { display: none; }
 
 @media (max-width: 767px) {
+  /* Sized to the part of the viewport the keyboard leaves visible, so nothing
+     below - CodeMirror's own scrolling included - has to guess. */
+  body { height: calc(100dvh - var(--kb-inset, 0px)); }
+
+  /* With the keyboard up, chrome competes with the code for the few lines that
+     are left. It comes back when the keyboard goes away. */
+  :root[data-keyboard='open'] #tabs,
+  :root[data-keyboard='open'] #pane-fab {
+    display: none;
+  }
+
+  :root[data-keyboard='open'] #editor-host .cm-scroller { padding-bottom: 8px; }
+
   :root {
     --bar-h: 44px;
     /* The bottom bar is deliberately dark in both themes: it reads as chrome

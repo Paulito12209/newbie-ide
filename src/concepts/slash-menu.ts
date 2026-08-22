@@ -186,14 +186,35 @@ function buildMenu(entries: readonly Entry[], ctx: CursorContext, trigger: Trigg
   menu.append(element('div', 'sl-foot', 'Enter to use, Esc to dismiss'));
   anchor.append(menu);
 
-  // Measured once after mount, never during typing: the menu hangs off the
-  // cursor, which can sit close to the right edge, and arrow-key navigation
-  // has to keep the selected row visible.
+  // Measured once after mount, never during typing. The menu hangs off the
+  // cursor, so it has to be kept inside the pane in both directions - and with
+  // a keyboard up there is often no room below the cursor at all.
   requestAnimationFrame(() => {
     const pane = anchor.closest('.cm-editor');
     if (pane) {
-      const overflow = menu.getBoundingClientRect().right - (pane.getBoundingClientRect().right - 8);
+      const paneBox = pane.getBoundingClientRect();
+      const anchorBox = anchor.getBoundingClientRect();
+
+      const overflow = menu.getBoundingClientRect().right - (paneBox.right - 8);
       if (overflow > 0) menu.style.marginLeft = `${-overflow}px`;
+
+      // The mobile file bar floats over the bottom of the pane, so the usable
+      // area ends where it starts.
+      const bar = document.getElementById('tabs');
+      const floating = bar && getComputedStyle(bar).position === 'absolute';
+      const limit = floating ? bar.getBoundingClientRect().top : paneBox.bottom;
+
+      const below = limit - anchorBox.bottom - 12;
+      const above = anchorBox.top - paneBox.top - 12;
+      const footer = 28;
+
+      if (above > below) {
+        menu.style.top = 'auto';
+        menu.style.bottom = '1.5em';
+        list.style.maxHeight = `${Math.max(80, above - footer)}px`;
+      } else {
+        list.style.maxHeight = `${Math.max(80, Math.min(216, below - footer))}px`;
+      }
     }
     active?.scrollIntoView({ block: 'nearest' });
   });

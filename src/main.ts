@@ -18,6 +18,7 @@ import { createDrawer } from './ui/drawer';
 import { createSplitter } from './ui/splitter';
 import { createStatus } from './ui/status';
 import { createTabs } from './ui/tabs';
+import { trackKeyboard } from './ui/keyboard';
 import { applyTheme } from './ui/theme';
 import type { FileDoc } from './state';
 import { entryFile, fileById, kindOf, newId, persist, persistNow, session } from './state';
@@ -37,6 +38,9 @@ const statusBar = document.getElementById('status') as HTMLElement;
 // Before anything renders: the inline script in index.html has already set the
 // attribute, this keeps the module the single source of truth afterwards.
 applyTheme(session.theme);
+
+// Sizes the shell to the part of the viewport the keyboard is not covering.
+trackKeyboard();
 
 const onThemeChange = (mode: typeof session.theme): void => {
   session.theme = mode;
