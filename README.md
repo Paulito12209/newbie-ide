@@ -31,21 +31,46 @@ branches get preview URLs.
 Produced by `npm run build && npm run size` (gzip level 9):
 
 ```
-  334.08 KB raw    108.75 KB gzip  initial  assets/index-*.js
+  339.40 KB raw    110.40 KB gzip  initial  assets/index-*.js
    76.43 KB raw     30.19 KB gzip  lazy     assets/js-*.js
    16.92 KB raw      8.01 KB gzip  lazy     assets/css-*.js
     8.42 KB raw      3.28 KB gzip  lazy     assets/concepts-*.js
     7.69 KB raw      1.94 KB gzip  lazy     assets/concepts-*.css
-    4.50 KB raw      1.52 KB gzip  initial  assets/index-*.css
-    1.57 KB raw      0.76 KB gzip  initial  index.html
+    6.97 KB raw      2.11 KB gzip  initial  assets/index-*.css
+    1.69 KB raw      0.79 KB gzip  initial  index.html
 ----------------------------------------------------------------
-initial (cold load): 111.03 KB gzip
+initial (cold load): 113.30 KB gzip
 lazy (on demand):     43.42 KB gzip
-total:               154.45 KB gzip
+total:               156.72 KB gzip
 ```
 
-**154.45 KB gzipped total**, of which **111.03 KB** is fetched on cold load.
+**156.72 KB gzipped total**, of which **113.30 KB** is fetched on cold load.
 Budget was 400 KB.
+
+## Files
+
+A file list, not three fixed slots. `+` at the end of the file bar creates one,
+tapping the file you are already in renames it, and the rename dialog is also
+where you delete it. Names must end in `.html`, `.css` or `.js` - that extension
+is the only thing that decides how a file is treated. No folders yet.
+
+**Nothing is wired up implicitly.** A stylesheet applies because the HTML links
+it, and a script runs because the HTML loads it:
+
+```html
+<link rel="stylesheet" href="style.css">
+<script src="script.js"></script>
+```
+
+The preview resolves those references against the open files by name, exactly as
+a browser resolves them against a server. Delete the `<link>` and the styling
+stops. Point it at a file that does not exist and it stays a dead link. That is
+the point: a beginner has to learn that CSS does not attach itself, and an editor
+that quietly injects it teaches the opposite.
+
+`index.html` is the page (or the first `.html` file, if it is named something
+else). Resolution happens through `DOMParser`, so it is real HTML parsing rather
+than a regex over the source.
 
 ## The two preview paths
 
@@ -94,9 +119,10 @@ strictly after first paint. Only the HTML mode is in the entry chunk.
 
 ## Menu bar and theming
 
-One narrow row above the panes - 44px, well inside the 64px ceiling. App name on
-the left, an actions group on the right; today that group holds the theme
-control and it is where later actions go.
+**Desktop only** - 44px, well inside the 64px ceiling. App name on the left, an
+actions group on the right; today that group holds the theme control and it is
+where later actions go. Mobile has no top bar at all and reaches the same
+control through the options button in the bottom file bar.
 
 The theme button cycles **Auto - Light - Dark**. Auto stamps nothing on the
 document and lets `prefers-color-scheme` decide; the other two set `data-theme`
@@ -123,28 +149,34 @@ which is the honest reading of "your page is over there".
 
 ## Mobile layout
 
-Under 768px the two panes stop sharing the screen and ride a sliding track
-instead. The editor takes the whole viewport except a **24px strip on the right,
-where the edge of the live preview stays visible** - so the output is never out
-of sight, just out of the way.
+Below 768px the layout is a different thing, not a squeezed version of the
+desktop one.
 
-That strip is also the control:
+- **No bar along the top.** The whole viewport is the pane.
+- **The file bar sits at the bottom**, as a dark strip floating over the code
+  rather than a hard divider - the editor scrolls underneath it and keeps a
+  matching bottom inset so the last line is never trapped behind it. It is dark
+  in both themes on purpose: it reads as chrome above the content.
+- **One pane at a time.** A single button pinned to the edge you are heading
+  towards: **Display** on the right while you are in the code, **Code** on the
+  left once you are in the preview. The peeking strip and the edge swipe are
+  gone; the right edge no longer does anything special.
+- **The options button** sits at the end of the file bar. With no top bar, that
+  is where the theme control lives.
 
-- **tap** it to switch panes,
-- **swipe** it right-to-left to pull the preview in (the track follows your
-  finger, and a flick counts even if it is short),
-- **drag** it back, or tap the matching 24px of editor that now peeks on the
-  left. The layout is symmetric, so the way back is always in the same place.
+The switch button rides down the screen as the screen gets taller: 24px below
+centre at 667px tall, and another 24px for every 100px of height after that.
 
-A drag that stops short of halfway snaps back where it came from; an interrupted
-gesture (a call, a system swipe) settles on the pane it started from rather than
-stranding the track mid-slide. Keyboard: the strip is focusable, ArrowLeft shows
-the preview, ArrowRight the editor, Enter toggles.
+```css
+--switch-offset: max(24px, calc(24px + (100dvh - 667px) * 0.24));
+top: min(calc(50% + var(--switch-offset)), calc(100% - var(--bar-h) - 56px));
+```
 
-The desktop splitter and the mobile pane switcher are two different interactions
-sharing one DOM element, and only one is attached at a time - the layout switch
-detaches the other cleanly, including mid-drag. Nothing on mobile resizes
-anything; nothing on desktop slides.
+Measured: 24px at 667, 48px at 767, 59px at 812 - and the `min()` keeps it clear
+of the file bar on short, wide windows.
+
+The pane slide is `translateX(-100%)` on both panes, so the geometry is pure CSS
+with no pixel maths in JavaScript.
 
 ## Error handling
 
@@ -176,7 +208,8 @@ src/
     bridge.ts          the only module that talks to the iframe
     runtime.ts         the script that runs inside the iframe
   ui/
-    menubar.ts  theme.ts  tabs.ts  splitter.ts  mobile.ts  status.ts
+    tabs.ts  dialog.ts  options.ts  menubar.ts  theme.ts
+    splitter.ts  mobile.ts  status.ts
 ```
 
 The editor knows nothing about the preview, and the preview knows nothing about

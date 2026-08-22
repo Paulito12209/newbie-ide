@@ -2,51 +2,56 @@
  * Editor setup. Knows nothing about the preview or about concepts; it only
  * reports document changes and hosts the concept extension point.
  *
- * One EditorState per language, swapped with `view.setState`, so each tab keeps
- * its own undo history, cursor and scroll position.
+ * One EditorState per file, swapped with `view.setState`, so every tab keeps its
+ * own undo history, cursor and scroll position. States are keyed by file id, so
+ * a rename keeps all of that.
  */
 import { EditorView, drawSelection, highlightActiveLineGutter, keymap, lineNumbers } from '@codemirror/view';
 import { EditorState, Compartment } from '@codemirror/state';
 import type { Text } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { bracketMatching, indentOnInput, indentUnit } from '@codemirror/language';
-import type { LangId } from '../state';
-import { LANGS } from '../state';
+import type { FileDoc, LangId } from '../state';
 import { closeBrackets } from './close-brackets';
 import { conceptHost } from './concept-hook';
 import { loadLanguage, peekLanguage } from './languages';
 import { theme } from './theme';
 
 export interface EditorOptions {
-  docs: Record<LangId, string>;
-  active: LangId;
+  initial: FileDoc;
   /**
    * Called on every document change. Receives the Text object rather than a
    * string: turning a document into a string is O(n) and must not happen on the
    * keystroke path. Callers stringify later, off the critical path.
    */
-  onDocChanged: (lang: LangId, doc: Text) => void;
+  onDocChanged: (fileId: string, doc: Text) => void;
 }
 
 export interface EditorHandle {
   readonly view: EditorView;
-  show(lang: LangId): void;
+  show(file: FileDoc): void;
+  /** Drop a deleted file's state so it cannot come back. */
+  forget(fileId: string): void;
   focus(): void;
   destroy(): void;
 }
 
+interface Slot {
+  state: EditorState;
+  kind: LangId;
+  compartment: Compartment;
+}
+
 export function createEditor(parent: HTMLElement, options: EditorOptions): EditorHandle {
-  const states = new Map<LangId, EditorState>();
-  const compartments = new Map<LangId, Compartment>();
-  let current = options.active;
+  const slots = new Map<string, Slot>();
+  let current = options.initial.id;
 
-  function buildState(lang: LangId): EditorState {
+  function build(file: FileDoc): Slot {
     const compartment = new Compartment();
-    compartments.set(lang, compartment);
-    const mode = peekLanguage(lang);
+    const mode = peekLanguage(file.kind);
 
-    return EditorState.create({
-      doc: options.docs[lang],
+    const state = EditorState.create({
+      doc: file.text,
       extensions: [
         lineNumbers(),
         highlightActiveLineGutter(),
@@ -61,66 +66,68 @@ export function createEditor(parent: HTMLElement, options: EditorOptions): Edito
         keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
         theme,
         compartment.of(mode ?? []),
-        conceptHost(lang),
+        conceptHost(file.kind),
         EditorView.updateListener.of((update) => {
-          if (update.docChanged) options.onDocChanged(lang, update.state.doc);
+          if (update.docChanged) options.onDocChanged(file.id, update.state.doc);
         }),
       ],
     });
+
+    return { state, kind: file.kind, compartment };
   }
 
-  function stateFor(lang: LangId): EditorState {
-    let state = states.get(lang);
-    if (!state) {
-      state = buildState(lang);
-      states.set(lang, state);
-    }
-    return state;
+  function slotFor(file: FileDoc): Slot {
+    const existing = slots.get(file.id);
+    // A rename that changes the extension changes the language, and that is the
+    // one case where the state has to be rebuilt.
+    if (existing && existing.kind === file.kind) return existing;
+    const slot = build(file);
+    slots.set(file.id, slot);
+    return slot;
   }
 
-  const view = new EditorView({ parent, state: stateFor(current) });
+  const view = new EditorView({ parent, state: slotFor(options.initial).state });
 
   /**
-   * Attach a grammar that was not loaded yet. The tab switch itself never
-   * waits on the network: the document is shown immediately, unhighlighted,
-   * and gains highlighting a moment later.
+   * Attach a grammar that was not loaded yet. Switching files never waits on the
+   * network: the document shows immediately, unhighlighted, and gains
+   * highlighting a moment later.
    */
-  function ensureMode(lang: LangId): void {
-    if (peekLanguage(lang)) return;
-    void loadLanguage(lang).then((mode) => {
-      const compartment = compartments.get(lang);
-      const state = states.get(lang);
-      if (!compartment || !state) return;
-      if (current === lang) {
-        view.dispatch({ effects: compartment.reconfigure(mode) });
-        states.set(lang, view.state);
+  function ensureMode(file: FileDoc): void {
+    if (peekLanguage(file.kind)) return;
+    void loadLanguage(file.kind).then((mode) => {
+      const slot = slots.get(file.id);
+      if (!slot) return;
+      if (current === file.id) {
+        view.dispatch({ effects: slot.compartment.reconfigure(mode) });
+        slot.state = view.state;
       } else {
-        states.set(lang, state.update({ effects: compartment.reconfigure(mode) }).state);
+        slot.state = slot.state.update({ effects: slot.compartment.reconfigure(mode) }).state;
       }
     });
   }
 
-  ensureMode(current);
+  ensureMode(options.initial);
 
   return {
     view,
-    show(lang: LangId): void {
-      if (lang === current) return;
-      states.set(current, view.state);
-      current = lang;
-      view.setState(stateFor(lang));
-      ensureMode(lang);
+    show(file: FileDoc): void {
+      const slot = slots.get(current);
+      if (slot) slot.state = view.state;
+      current = file.id;
+      view.setState(slotFor(file).state);
+      ensureMode(file);
       view.focus();
+    },
+    forget(fileId: string): void {
+      slots.delete(fileId);
     },
     focus(): void {
       view.focus();
     },
     destroy(): void {
       view.destroy();
-      states.clear();
-      compartments.clear();
+      slots.clear();
     },
   };
 }
-
-export { LANGS };

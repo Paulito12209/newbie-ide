@@ -185,12 +185,24 @@ body {
 
 #tabs {
   display: flex;
+  min-width: 0;
   border-bottom: 1px solid var(--line);
   background: var(--chrome);
 }
 
+.tabs-scroll {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs-scroll::-webkit-scrollbar { display: none; }
+
 #tabs button {
   appearance: none;
+  flex: 0 0 auto;
   border: 0;
   border-right: 1px solid var(--line);
   background: transparent;
@@ -198,12 +210,18 @@ body {
   font: inherit;
   padding: 0 12px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 #tabs button[aria-selected='true'] {
   background: var(--bg);
   color: var(--fg);
 }
+
+.tab-add { font-size: 15px; line-height: 1; }
+
+/* The theme lives in the top bar on desktop, so the menu is mobile-only. */
+.tab-options { display: none; }
 
 #editor-host {
   min-height: 0;
@@ -256,16 +274,122 @@ body {
   background: var(--surface-2);
 }
 
+/* --- dialog and options ----------------------------------------------------- */
+
+.sl-dialog {
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  min-width: 260px;
+  max-width: calc(100vw - 32px);
+}
+
+.sl-dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
+
+.sl-dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+}
+
+.sl-dialog h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sl-dialog input {
+  font: inherit;
+  font-family: var(--font-mono);
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  padding: 6px 8px;
+}
+
+.sl-dialog input:focus-visible { outline: 2px solid var(--fg); outline-offset: -1px; }
+
+.sl-dialog-error {
+  margin: -4px 0 0;
+  min-height: 1.2em;
+  color: var(--syn-invalid);
+}
+
+.sl-dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.sl-dialog-buttons button {
+  font: inherit;
+  color: var(--fg);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  padding: 5px 12px;
+  cursor: pointer;
+}
+
+.sl-dialog-confirm { background: var(--fill-strong); }
+.sl-dialog-delete { margin-right: auto; }
+
+.sl-options {
+  position: fixed;
+  inset: auto 8px calc(var(--bar-h, 44px) + 8px) auto;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  box-shadow: 0 2px 10px var(--shadow);
+}
+
+.sl-options-item {
+  display: block;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  color: var(--fg);
+  background: transparent;
+  border: 0;
+  padding: 7px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sl-options-item:hover { background: var(--surface-2); }
+
 /* --- mobile -----------------------------------------------------------------
-   One pane at a time on a sliding track. The editor takes the whole viewport
-   except a --peek strip on the right, where the live preview stays visible and
-   doubles as the handle: tap it or swipe it across. Keep the query in sync with
-   MOBILE_QUERY in src/ui/mobile.ts. */
+   One pane at a time, full width. No bar along the top: the file bar moves to
+   the bottom as a dark strip floating over the code, and switching panes is a
+   single button pinned to the edge you are heading towards.
+
+   Keep the query in sync with MOBILE_QUERY in src/ui/mobile.ts. */
+
+.pane-switch { display: none; }
 
 @media (max-width: 767px) {
+  :root {
+    --bar-h: 44px;
+    /* The bottom bar is deliberately dark in both themes: it reads as chrome
+       floating above the content rather than part of the page. */
+    --bar-bg: rgba(20, 21, 23, 0.86);
+    --bar-fg: #f2f2f2;
+    --bar-muted: #9aa0a6;
+    --bar-hairline: rgba(255, 255, 255, 0.14);
+  }
+
+  #menubar { display: none; }
+
+  body { grid-template-rows: 1fr; }
+
   #app {
-    --peek: 24px;
-    --slide: 0px;
     display: flex;
     grid-template-columns: none;
     position: relative;
@@ -274,52 +398,91 @@ body {
 
   #pane-editor,
   #pane-preview {
-    flex: 0 0 calc(100% - var(--peek));
-    transform: translateX(var(--slide));
+    flex: 0 0 100%;
     transition: transform 0.28s cubic-bezier(0.2, 0, 0, 1);
     will-change: transform;
   }
 
-  #app[data-dragging='true'] #pane-editor,
-  #app[data-dragging='true'] #pane-preview {
-    transition: none;
+  /* Percentages resolve against each pane's own width, which is the viewport. */
+  #app[data-mobile-view='preview'] #pane-editor,
+  #app[data-mobile-view='preview'] #pane-preview {
+    transform: translateX(-100%);
   }
 
-  /* Sits on top of whichever pane edge is currently peeking. */
-  #splitter {
+  #pane-editor {
+    grid-template-rows: 1fr;
+    position: relative;
+  }
+
+  #splitter { display: none; }
+
+  /* Not a hard divider: a dark background sitting over the code behind it. */
+  #tabs {
     position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    left: auto;
-    width: var(--peek);
-    z-index: 5;
-    background: transparent;
-    cursor: pointer;
-    touch-action: none;
-  }
-
-  #app[data-mobile-view='preview'] #splitter {
-    right: auto;
     left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 6;
+    height: var(--bar-h);
+    border-bottom: 0;
+    background: var(--bar-bg);
+    backdrop-filter: blur(10px);
   }
 
-  /* Grip, so the strip reads as something you can grab. */
-  #splitter::after {
-    content: '';
+  #tabs button {
+    border-right: 0;
+    color: var(--bar-muted);
+    padding: 0 14px;
+  }
+
+  #tabs button[aria-selected='true'] {
+    background: transparent;
+    color: var(--bar-fg);
+    box-shadow: inset 0 -2px 0 var(--bar-fg);
+  }
+
+  .tab-add { color: var(--bar-muted); }
+
+  .tab-options {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 46px;
+    color: var(--bar-muted);
+    border-left: 1px solid var(--bar-hairline);
+  }
+
+  .tab-options svg { fill: currentColor; }
+
+  /* The bar floats over the code, so the last lines need somewhere to go. */
+  #editor-host .cm-scroller { padding-bottom: calc(var(--bar-h) + 8px); }
+
+  /* Pane switch. Position follows the viewport height: 24px below centre at
+     667px tall, and another 24px for every 100px of height after that. */
+  .pane-switch {
+    --switch-offset: max(24px, calc(24px + (100dvh - 667px) * 0.24));
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 3px;
-    height: 30px;
-    margin: -15px 0 0 -1.5px;
-    background: var(--border-strong);
+    top: min(calc(50% + var(--switch-offset)), calc(100% - var(--bar-h) - 56px));
+    z-index: 7;
+    font: inherit;
+    font-size: 12px;
+    color: var(--bar-fg);
+    background: var(--bar-bg);
+    backdrop-filter: blur(10px);
+    border: 0;
+    padding: 10px 12px;
+    cursor: pointer;
   }
 
-  #preview { border-left: 1px solid var(--border-strong); }
+  #to-preview { right: 0; }
+  #to-editor { left: 0; }
 
-  #status {
-    border-left: 0;
-    padding-left: 28px;
+  #app[data-mobile-view='editor'] #to-preview,
+  #app[data-mobile-view='preview'] #to-editor {
+    display: block;
   }
+
+  #preview { border-left: 0; }
+  #status { border-left: 0; }
 }
