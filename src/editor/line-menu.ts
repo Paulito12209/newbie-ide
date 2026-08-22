@@ -109,6 +109,8 @@ export function lineMenu(): Extension {
           // more than enough to keep up with a pointer.
           this.frame = requestAnimationFrame(() => {
             this.frame = 0;
+            // Never dispatch into a composing view; see concept-hook.ts.
+            if (this.view.composing) return;
             const pos = this.view.posAtCoords({ x: event.clientX, y: event.clientY });
             const next = pos == null ? null : this.view.state.doc.lineAt(pos).number;
             if (next === this.hovered) return;
@@ -120,7 +122,7 @@ export function lineMenu(): Extension {
         };
 
         private onLeave = (): void => {
-          if (this.hovered == null) return;
+          if (this.hovered == null || this.view.composing) return;
           this.hovered = null;
           this.decorations = build(this.view, null);
           this.view.dispatch({});

@@ -89,10 +89,10 @@ export function preview(entry: TagEntry): string {
 
 /**
  * Expands a snippet at a given indent. Returns the text to insert and where the
- * caret goes inside it.
+ * caret goes inside it. Shared with the layout templates.
  */
-export function expand(entry: TagEntry, indent: string): { text: string; caret: number } {
-  const lines = entry.snippet.split('\n');
+export function expand(snippet: string, indent: string): { text: string; caret: number } {
+  const lines = snippet.split('\n');
   const text = lines.map((line, i) => (i === 0 ? line : indent + line)).join('\n');
   const caret = text.indexOf('|');
   return { text: text.replace('|', ''), caret: caret === -1 ? text.length : caret };

@@ -179,22 +179,27 @@ function build(view: EditorView, language: LangId): DecorationSet {
 
 /**
  * Tapping a slot moves the caret there, or selects the value if there is one.
- * mousedown rather than click, so the caret never lands mid-word first.
+ *
+ * On `click`, and without preventDefault: on a touch screen `mousedown` is a
+ * compatibility event fired after the tap has already been handled, so
+ * cancelling it there left the DOM selection and the editor's own state
+ * disagreeing - which showed up later as text being replaced that nobody
+ * touched. Letting the tap land first and adjusting the selection afterwards
+ * keeps the two in step.
  */
 const press = EditorView.domEventHandlers({
-  mousedown(event, view) {
+  click(event, view) {
     const target = (event.target as HTMLElement | null)?.closest?.('.cm-slot');
     if (!(target instanceof HTMLElement)) return false;
     const from = Number(target.dataset.from);
     const to = Number(target.dataset.to);
     if (!Number.isFinite(from) || !Number.isFinite(to)) return false;
-    event.preventDefault();
+    if (view.composing) return false;
     view.dispatch({
       selection: from === to ? EditorSelection.cursor(from) : EditorSelection.range(from, to),
       scrollIntoView: true,
     });
-    view.focus();
-    return true;
+    return false;
   },
 });
 

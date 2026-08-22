@@ -8,6 +8,7 @@
  * Adding a concept means adding an entry here. Nothing else changes.
  */
 import type { LangId } from '../state';
+import { session } from '../state';
 
 export interface Concept {
   id: string;
@@ -17,7 +18,7 @@ export interface Concept {
   /** Extra words the menu should match on. */
   keywords: string[];
   /** One or two sentences, beginner vocabulary, no jargon left unexplained. */
-  summary: string;
+  readonly summary: string;
   /** Builds the animated illustration. Called once per opened card. */
   demo(): HTMLElement;
 }
@@ -188,9 +189,13 @@ export const CONCEPTS: readonly Concept[] = [
     id: 'event',
     title: 'Event listener',
     language: 'js',
-    keywords: ['click', 'addEventListener', 'handler', 'interaction'],
-    summary:
-      'An event listener waits for something to happen - a click, a key, a scroll - and runs your function when it does. Nothing happens until the event fires.',
+    keywords: ['click', 'onclick', 'addEventListener', 'handler', 'interaction'],
+    get summary(): string {
+      // Follows the rule: no point teaching a form the editor will not write.
+      return session.rules.addEventListener
+        ? 'A page can wait for something to happen - a click, a key, a scroll - and run your function when it does. button.addEventListener("click", ...) attaches the handler. Nothing happens until the event fires.'
+        : 'A page can wait for something to happen - a click, a key, a scroll - and run your function when it does. button.onclick = function () { ... } is the simplest way to say it. Nothing happens until the event fires.';
+    },
     demo: () =>
       demo(
         'cd-event',

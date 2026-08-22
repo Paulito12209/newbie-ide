@@ -19,8 +19,23 @@ export interface FileDoc {
   text: string;
 }
 
+/**
+ * What the editor is allowed to reach for. Everything starts locked: the point
+ * is to grow the language you work in on purpose, not to be handed all of it at
+ * once. Each rule changes what the tool actually writes, never just a label.
+ */
+export interface Rules {
+  /** Off: layout templates write flexbox. On: they write CSS grid. */
+  grid: boolean;
+  /** Off: examples use button.onclick. */
+  addEventListener: boolean;
+}
+
+export const DEFAULT_RULES: Rules = { grid: false, addEventListener: false };
+
 export interface Session {
   files: FileDoc[];
+  rules: Rules;
   activeId: string;
   /** Editor pane width as a percentage of the window. Desktop only. */
   split: number;
@@ -82,14 +97,19 @@ const DEFAULT_CSS = [
   '',
 ].join('\n');
 
+/**
+ * Written the way a beginner is taught first: getElementById and onclick, plain
+ * function, plain string joining. No addEventListener, no arrow function and no
+ * template literal - backticks are also a nuisance on a phone keyboard.
+ */
 const DEFAULT_JS = [
   "const button = document.getElementById('go');",
   'let count = 0;',
   '',
-  "button.addEventListener('click', () => {",
-  '  count += 1;',
-  '  button.textContent = `Clicked ${count}`;',
-  '});',
+  'button.onclick = function () {',
+  '  count = count + 1;',
+  "  button.textContent = 'Clicked ' + count;",
+  '};',
   '',
 ].join('\n');
 
@@ -103,7 +123,7 @@ function starterFiles(html = DEFAULT_HTML, css = DEFAULT_CSS, js = DEFAULT_JS): 
 
 function defaults(): Session {
   const files = starterFiles();
-  return { files, activeId: files[0]!.id, split: 50, theme: 'system' };
+  return { files, activeId: files[0]!.id, split: 50, theme: 'system', rules: { ...DEFAULT_RULES } };
 }
 
 /**
@@ -143,6 +163,7 @@ function migrateLegacy(): Session | null {
       activeId: files[0]!.id,
       split: typeof old.split === 'number' && old.split > 0 ? old.split : 50,
       theme: THEMES.includes(old.theme as ThemeMode) ? (old.theme as ThemeMode) : 'system',
+      rules: { ...DEFAULT_RULES },
     };
   } catch {
     return null;
@@ -174,6 +195,7 @@ function read(): Session {
       activeId: active,
       split: typeof parsed.split === 'number' && parsed.split > 0 ? parsed.split : 50,
       theme: THEMES.includes(parsed.theme as ThemeMode) ? (parsed.theme as ThemeMode) : 'system',
+      rules: { ...DEFAULT_RULES, ...(parsed.rules ?? {}) },
     };
   } catch {
     // Corrupt or unavailable storage must never stop the editor from booting.

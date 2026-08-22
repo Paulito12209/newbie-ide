@@ -212,6 +212,14 @@ export function conceptHost(language: LangId): Extension {
           if (this.frame) return;
           this.frame = requestAnimationFrame(() => {
             this.frame = 0;
+            // Dispatching into a view that is mid-composition corrupts the
+            // input: Android keyboards compose a whole word before committing
+            // it, and an unrelated transaction makes them re-send or replace
+            // what is already there. Wait for the word to land.
+            if (this.view.composing) {
+              this.schedule();
+              return;
+            }
             this.run();
           });
         }

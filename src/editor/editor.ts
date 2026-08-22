@@ -7,8 +7,11 @@
  * a rename keeps all of that.
  */
 import { EditorView, drawSelection, highlightActiveLineGutter, keymap, lineNumbers } from '@codemirror/view';
-import { EditorState, Compartment } from '@codemirror/state';
+import { EditorState, Annotation, Compartment } from '@codemirror/state';
 import type { Text } from '@codemirror/state';
+
+/** Marks a change the caller already applied to the file itself. */
+const External = Annotation.define<boolean>();
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { bracketMatching, indentOnInput, indentUnit } from '@codemirror/language';
 import type { FileDoc, LangId } from '../state';
@@ -16,6 +19,7 @@ import { closeBrackets } from './close-brackets';
 import { conceptHost } from './concept-hook';
 import { loadLanguage, peekLanguage } from './languages';
 import { lineMenu } from './line-menu';
+import { missingCloserChips } from './missing-closers';
 import { editableSlots } from './slots';
 import { touchGestures } from './touch-gestures';
 import { MOBILE_QUERY } from '../ui/mobile';
@@ -34,6 +38,11 @@ export interface EditorOptions {
 export interface EditorHandle {
   readonly view: EditorView;
   show(file: FileDoc): void;
+  /**
+   * Append to a file's document. Returns false when the editor has never opened
+   * that file, in which case the caller owns the text and can change it itself.
+   */
+  append(fileId: string, text: string): boolean;
   /** Drop a deleted file's state so it cannot come back. */
   forget(fileId: string): void;
   focus(): void;
@@ -72,6 +81,7 @@ export function createEditor(parent: HTMLElement, options: EditorOptions): Edito
         compartment.of(mode ?? []),
         editableSlots(file.kind),
         lineMenu(),
+        missingCloserChips(),
         touchGestures(),
         // Keep a line of room below the caret, so it is never the last visible
         // line above the keyboard.
@@ -80,7 +90,9 @@ export function createEditor(parent: HTMLElement, options: EditorOptions): Edito
         ),
         conceptHost(file.kind),
         EditorView.updateListener.of((update) => {
-          if (update.docChanged) options.onDocChanged(file.id, update.state.doc);
+          if (!update.docChanged) return;
+          if (update.transactions.some((tr) => tr.annotation(External))) return;
+          options.onDocChanged(file.id, update.state.doc);
         }),
       ],
     });
@@ -129,7 +141,23 @@ export function createEditor(parent: HTMLElement, options: EditorOptions): Edito
       current = file.id;
       view.setState(slotFor(file).state);
       ensureMode(file);
-      view.focus();
+      // Not on mobile: focusing throws the keyboard up and parks the caret at
+      // the top of a file you only wanted to look at. Switching files and
+      // starting to type are two decisions, and they are the user's to make.
+      if (!window.matchMedia(MOBILE_QUERY).matches) view.focus();
+    },
+    append(fileId: string, text: string): boolean {
+      const slot = slots.get(fileId);
+      if (!slot) return false;
+      if (current === fileId) {
+        // annotate: the caller has already written this into the file, so the
+        // change listener must not report it back as a fresh edit.
+        view.dispatch({ changes: { from: view.state.doc.length, insert: text }, annotations: External.of(true) });
+        slot.state = view.state;
+      } else {
+        slot.state = slot.state.update({ changes: { from: slot.state.doc.length, insert: text } }).state;
+      }
+      return true;
     },
     forget(fileId: string): void {
       slots.delete(fileId);

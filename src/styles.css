@@ -254,10 +254,13 @@ body {
   cursor: pointer;
 }
 
+/* Taller than the mark, but barely wider: reaching sideways made a slot steal
+   taps meant for the character next to it, and selecting a value nobody aimed
+   at is how text gets replaced by accident. */
 .cm-slot::after {
   content: '';
   position: absolute;
-  inset: -7px -5px;
+  inset: -6px -1px;
 }
 
 .cm-slot-filled {
@@ -421,6 +424,27 @@ body {
    The dots sit 40px past the end of a line that finishes a tag. Mobile only:
    above the breakpoint a mouse makes both actions trivial already. */
 
+/* Closers still owed, parked at the right edge of the active line. Greyed out
+   because they are not in the document yet. */
+.cm-closers { display: none; }
+
+.cm-closer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 24px;
+  margin-left: 4px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 5px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.cm-closer:active { opacity: 1; }
+
 .cm-line-menu {
   display: inline-flex;
   align-items: center;
@@ -550,6 +574,72 @@ body {
 .sl-toast[data-visible='true'] {
   opacity: 1;
   transform: translate(-50%, 0);
+}
+
+/* --- settings --------------------------------------------------------------- */
+
+.sl-settings {
+  padding: 16px;
+  max-width: min(420px, calc(100vw - 32px));
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 13px;
+}
+
+.sl-settings::backdrop { background: rgba(0, 0, 0, 0.45); }
+
+.sl-settings h2 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.sl-settings-intro {
+  margin: 6px 0 14px;
+  color: var(--muted);
+}
+
+.sl-settings-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.sl-settings-check {
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  flex: 0 0 auto;
+  accent-color: var(--fg);
+}
+
+.sl-settings-name {
+  display: block;
+  font-family: var(--font-mono);
+}
+
+.sl-settings-note {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+}
+
+.sl-settings-close {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  font: inherit;
+  color: var(--fg);
+  background: var(--fill-strong);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 9px;
+  cursor: pointer;
 }
 
 /* --- file drawer ------------------------------------------------------------
@@ -742,6 +832,12 @@ body {
     border-bottom: 0;
     background: var(--bar-bg);
     backdrop-filter: blur(10px);
+  }
+
+  .cm-closers {
+    display: inline-flex;
+    float: right;
+    margin-right: 6px;
   }
 
   #tabs button {

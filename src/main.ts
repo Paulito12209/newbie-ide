@@ -15,6 +15,7 @@ import { openFileDialog } from './ui/dialog';
 import { createMenuBar } from './ui/menubar';
 import { MOBILE_QUERY, createMobilePanes } from './ui/mobile';
 import { createDrawer } from './ui/drawer';
+import { openSettings } from './ui/settings';
 import { createSplitter } from './ui/splitter';
 import { createStatus } from './ui/status';
 import { createTabs } from './ui/tabs';
@@ -145,6 +146,14 @@ const tabs = createTabs(tabsHost, {
 const drawer = createDrawer({
   theme: session.theme,
   onThemeChange,
+  onSettings: () =>
+    openSettings({
+      rules: session.rules,
+      onChange: (key, value) => {
+        session.rules[key] = value;
+        persist();
+      },
+    }),
   onSelect: (id) => selectFile(id),
   onRename: (id) => renameFile(id),
   onCreate: () => createFile(),
@@ -262,8 +271,34 @@ window.addEventListener('pagehide', () => {
 
 rebuildNow();
 prefetchLanguages();
-editor.focus();
+// Same reasoning as switching files: do not summon the keyboard on load.
+if (!narrow.matches) editor.focus();
 
 // The concept-teaching layer is a separate chunk and a separate concern: it
 // attaches through the editor's extension point and nothing here depends on it.
-void import('./concepts').then((concepts) => concepts.installConcepts());
+void import('./concepts').then((concepts) =>
+  concepts.installConcepts({
+    /**
+     * Layout templates add their rules to the real stylesheet, so they are
+     * visible, editable and deletable like anything else the user wrote.
+     */
+    ensureCss(blocks) {
+      commitAll();
+      const sheet = session.files.find((file) => file.kind === 'css');
+      if (!sheet) return;
+
+      const missing = blocks.filter((block) => !sheet.text.includes(block.test));
+      if (missing.length === 0) return;
+
+      const addition = `\n${missing.map((block) => block.text).join('\n\n')}\n`;
+      // Both, always. The file is the source of truth - the preview and the
+      // "is this rule already here" check both read it - while the editor may
+      // be holding that document in a state of its own, open or cached. Writing
+      // only through the editor left the file stale whenever the stylesheet was
+      // not the visible tab, which duplicated rules and shipped old CSS.
+      sheet.text += addition;
+      editor.append(sheet.id, addition);
+      rebuildNow();
+    },
+  }),
+);

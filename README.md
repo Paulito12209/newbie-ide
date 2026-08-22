@@ -261,6 +261,61 @@ copying or selecting on every tap would fire at you constantly. Line-level
 actions live in the dots menu rather than in a hidden gesture - a gesture you
 have to discover is worse than a button you can see.
 
+## Layout templates
+
+`/3col`, `/2cards` and friends drop a column or card layout into the page - and
+write the CSS **into the stylesheet**, into the file you can see and edit. If you
+delete the rules, the layout stops working, exactly as it would anywhere else.
+Nothing is applied invisibly.
+
+The CSS is deliberately tiny and shared: one block per family, reused by every
+count. With flexbox that is all it needs - `flex: 1` divides the row however
+many children there are - so a second template of the same family adds nothing.
+
+```css
+.columns {
+  display: flex;
+  gap: 16px;
+}
+
+.columns > * {
+  flex: 1;
+}
+
+.columns > * + * {
+  border-left: 1px solid #e0e0e0;
+  padding-left: 16px;
+}
+```
+
+Cards get a border and a radius instead of the divider. Turning the grid rule on
+switches both families to CSS grid, which then does need a rule per column count.
+
+## Rules
+
+Everything the editor could reach for starts **locked**, and the drawer's
+Settings screen is where you widen it. Each rule changes what the tool actually
+writes, never just a label:
+
+| Rule | Off (default) | On |
+|---|---|---|
+| CSS Grid | templates write flexbox | templates write grid, with a rule per count |
+| addEventListener | examples use `button.onclick = function () {}` | examples use `addEventListener` |
+
+That is the seam the teaching layer grows into: a catalogue entry can ask
+whether a rule is unlocked, and the menu, the templates and the concept cards
+all read the same answer.
+
+## Missing closers
+
+Delete half of a pair by accident and the closer you still owe appears greyed
+out at the right edge of the line. Tap it and it lands at the caret - `>`, `}`
+and `"` are two keyboard layers deep on a phone, which is the whole reason.
+
+The scan runs from the start of the file to the caret rather than over the
+current line: a `{` is usually opened a line or two above the one you are typing
+on, and a per-line scan misses exactly that case.
+
 ## Error handling
 
 `window.onerror` and `unhandledrejection` are caught inside the iframe and
@@ -280,6 +335,8 @@ src/
     slash-menu.ts      the `/` menu; a plain consumer of the hook below
     catalog.ts         the concepts and their animated demos
     tags.ts            the HTML tag palette
+    layouts.ts         column and card templates
+    workspace.ts       the one door into the project files
     concepts.css       menu, card and every demo animation
   editor/
     editor.ts          CodeMirror setup; one EditorState per tab
@@ -287,6 +344,7 @@ src/
     close-brackets.ts  minimal auto-closing brackets
     slots.ts           tappable targets at editable positions
     line-menu.ts       the dots at the end of the current line
+    missing-closers.ts the closers you still owe, parked on the right
     touch-gestures.ts  double tap to select a word
     languages.ts       mode registry, lazy loading, prefetch
     lang/{html,css,js}.ts
@@ -296,7 +354,7 @@ src/
     runtime.ts         the script that runs inside the iframe
   ui/
     tabs.ts  drawer.ts  dialog.ts  line-actions.ts  icons.ts
-    keyboard.ts  toast.ts  clipboard.ts  menubar.ts  theme.ts
+    keyboard.ts  toast.ts  clipboard.ts  settings.ts  menubar.ts  theme.ts
     splitter.ts  mobile.ts  status.ts
 ```
 

@@ -13,6 +13,7 @@ import { applyTheme, nextTheme, themeLabel } from './theme';
 
 export interface DrawerOptions {
   theme: ThemeMode;
+  onSettings: () => void;
   onSelect: (id: string) => void;
   onRename: (id: string) => void;
   onCreate: () => void;
@@ -60,6 +61,12 @@ export function createDrawer(options: DrawerOptions): Drawer {
     options.onCreate();
   });
 
+  const settings = button('sl-drawer-action', 'Settings');
+  settings.addEventListener('click', () => {
+    dialog.close();
+    options.onSettings();
+  });
+
   const themeButton = button('sl-drawer-action', themeLabel(theme));
   themeButton.addEventListener('click', () => {
     theme = nextTheme(theme);
@@ -70,7 +77,7 @@ export function createDrawer(options: DrawerOptions): Drawer {
 
   const footer = document.createElement('div');
   footer.className = 'sl-drawer-footer';
-  footer.append(create, themeButton);
+  footer.append(create, settings, themeButton);
 
   dialog.append(header, list, footer);
   closeOnBackdrop(dialog);

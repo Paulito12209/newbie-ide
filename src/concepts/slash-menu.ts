@@ -16,14 +16,18 @@ import { CONCEPTS } from './catalog';
 import type { Concept } from './catalog';
 import { TAGS, expand, preview } from './tags';
 import type { TagEntry } from './tags';
+import { layouts, preview as layoutPreview } from './layouts';
+import type { LayoutEntry } from './layouts';
+import type { Workspace } from './workspace';
 import type { LangId } from '../state';
+import { session } from '../state';
 import './concepts.css';
 
 /**
  * `/` only opens the menu at the start of a line or after a space, so `</div>`,
  * `//comment` and `a / b` are left alone.
  */
-const TRIGGER = /(?:^|\s)\/([A-Za-z1-6-]*)$/;
+const TRIGGER = /(?:^|\s)\/([A-Za-z0-9-]*)$/;
 
 /**
  * Pressing Enter here means "I finished that element, give me the next one".
@@ -34,7 +38,13 @@ const AFTER_CLOSING_TAG = /<\/[a-zA-Z][\w-]*\s*>[ \t]*$/;
 
 const BADGE: Record<string, string> = { html: 'HTML', css: 'CSS', js: 'JS' };
 
-type Entry = { kind: 'tag'; tag: TagEntry } | { kind: 'concept'; concept: Concept };
+type Entry =
+  | { kind: 'tag'; tag: TagEntry }
+  | { kind: 'layout'; layout: LayoutEntry }
+  | { kind: 'concept'; concept: Concept };
+
+/** Set once at install time; layouts need to write into the stylesheet. */
+let workspace: Workspace | null = null;
 
 interface Trigger {
   query: string;
@@ -67,11 +77,26 @@ function triggerAt(ctx: CursorContext): Trigger | null {
   };
 }
 
+/**
+ * A query cannot contain a space - one ends the prompt - so "3 columns" has to
+ * be reachable as `3col`. Both sides are stripped to letters and digits before
+ * comparing, which makes label, id and keyword all match the same way.
+ */
+const normalize = (text: string): string => text.toLowerCase().replace(/[^a-z0-9]/g, '');
+
 function score(haystack: string, query: string): number {
-  if (haystack === query) return 4;
-  if (haystack.startsWith(query)) return 3;
-  if (haystack.includes(query)) return 2;
+  const hay = normalize(haystack);
+  if (hay === query) return 4;
+  if (hay.startsWith(query)) return 3;
+  if (hay.includes(query)) return 2;
   return -1;
+}
+
+/** Best score across everything an entry can be called. */
+function scoreAliases(aliases: readonly string[], query: string): number {
+  let best = -1;
+  for (const alias of aliases) best = Math.max(best, score(alias, query));
+  return best;
 }
 
 /**
@@ -80,24 +105,24 @@ function score(haystack: string, query: string): number {
  * still look up "loop".
  */
 function searchEntries(query: string, language: LangId): Entry[] {
-  const q = query.trim().toLowerCase();
+  const q = normalize(query);
   const scored: { entry: Entry; score: number }[] = [];
 
   if (language === 'html') {
+    for (const layout of layouts(session.rules.grid)) {
+      const value = q ? scoreAliases([layout.id, layout.label, ...layout.keywords], q) : 1;
+      if (value >= 0) scored.push({ entry: { kind: 'layout', layout }, score: value + 1 });
+    }
+
     for (const tag of TAGS) {
-      const value = q ? score(tag.id, q) : 1;
+      const value = q ? scoreAliases([tag.id, tag.label], q) : 1;
       // A tag you named exactly is what you meant; nothing should outrank it.
       if (value >= 0) scored.push({ entry: { kind: 'tag', tag }, score: value + 1 });
     }
   }
 
   for (const concept of CONCEPTS) {
-    let value = -1;
-    if (!q) value = 0;
-    else {
-      value = Math.max(score(concept.id, q), score(concept.title.toLowerCase(), q));
-      if (value < 0 && concept.keywords.some((word) => word.toLowerCase().startsWith(q))) value = 1;
-    }
+    const value = q ? scoreAliases([concept.id, concept.title, ...concept.keywords], q) : 0;
     if (value >= 0) scored.push({ entry: { kind: 'concept', concept }, score: value + (concept.language === language ? 0.5 : 0) });
   }
 
@@ -125,11 +150,15 @@ function choose(entry: Entry, ctx: CursorContext, trigger: Trigger): void {
   suppressed = null;
   autoSlash = false;
 
-  if (entry.kind === 'tag') {
+  if (entry.kind === 'tag' || entry.kind === 'layout') {
     // The only case where the teaching layer writes code, and only because the
     // characters it writes are the ones a phone keyboard hides.
-    const { text, caret } = expand(entry.tag, trigger.indent);
+    const snippet = entry.kind === 'tag' ? entry.tag.snippet : entry.layout.html;
+    const { text, caret } = expand(snippet, trigger.indent);
     ctx.replaceRange(trigger.from, ctx.pos, text, caret);
+    // A layout is markup plus the rules that make it a layout. Both land in
+    // real files; nothing is applied invisibly.
+    if (entry.kind === 'layout') workspace?.ensureCss(entry.layout.css);
     return;
   }
 
@@ -158,17 +187,21 @@ function buildMenu(entries: readonly Entry[], ctx: CursorContext, trigger: Trigg
     if (index === selected) active = row;
 
     const head = element('div', 'sl-head');
-    const isTag = entry.kind === 'tag';
-    head.append(element('span', 'sl-title', isTag ? entry.tag.label : entry.concept.title));
-    head.append(
-      element('span', 'sl-badge' + (isTag ? ' sl-badge-tag' : ''), isTag ? 'TAG' : BADGE[entry.concept.language]!),
-    );
+    const title =
+      entry.kind === 'tag' ? entry.tag.label : entry.kind === 'layout' ? entry.layout.label : entry.concept.title;
+    const badge =
+      entry.kind === 'tag' ? 'TAG' : entry.kind === 'layout' ? 'LAYOUT' : BADGE[entry.concept.language]!;
+    head.append(element('span', 'sl-title', title));
+    head.append(element('span', `sl-badge${entry.kind === 'concept' ? '' : ' sl-badge-tag'}`, badge));
     row.append(head);
 
-    if (isTag) {
-      // Show the markup: the point is that you learn it, not that it is hidden.
+    // Show the markup: the point is that you learn it, not that it is hidden.
+    if (entry.kind === 'tag') {
       row.append(element('code', 'sl-markup', preview(entry.tag)));
       row.append(element('div', 'sl-desc', entry.tag.summary));
+    } else if (entry.kind === 'layout') {
+      row.append(element('code', 'sl-markup', layoutPreview(entry.layout)));
+      row.append(element('div', 'sl-desc', `${entry.layout.summary}, with its CSS added to the stylesheet`));
     } else {
       row.append(element('div', 'sl-desc', entry.concept.summary));
     }
@@ -332,6 +365,7 @@ const provider: ConceptProvider = {
   },
 };
 
-export function installSlashMenu(): () => void {
+export function installSlashMenu(host: Workspace): () => void {
+  workspace = host;
   return registerConceptProvider(provider);
 }
