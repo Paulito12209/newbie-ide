@@ -245,6 +245,18 @@ body {
   background: var(--bg);
 }
 
+/* The layer inline concept widgets live in: beside the content, so updating it
+   never touches the text the keyboard is composing into. */
+.cm-concept-layer {
+  position: absolute;
+  z-index: 20;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.cm-concept-layer > * { pointer-events: auto; }
+
 /* --- editable slots ---------------------------------------------------------
    The visible mark stays small; the hit area is deliberately much bigger than
    what is drawn, which is the whole point on a touch screen. */

@@ -6,6 +6,13 @@
  * navigation keys an inline UI needs. Everything else - what a concept is, how
  * it is triggered, what it looks like - lives in `src/concepts/`.
  *
+ * Inline widgets are mounted in an overlay layer next to the content, not as a
+ * decoration inside it. That distinction matters more than it looks: a
+ * decoration at the caret has to be installed with a transaction, and both the
+ * transaction and the DOM churn break an IME mid-word - which on an Android
+ * keyboard is every word. The overlay is repositioned instead, so a menu can
+ * keep filtering live while the keyboard is still composing.
+ *
  * Contract:
  *  - Providers are called at most once per animation frame, never inside the
  *    CodeMirror update cycle.
@@ -46,6 +53,14 @@ export interface CursorContext {
    * is what a provider needs to drop the cursor inside a pair it just wrote.
    */
   replaceRange(from: number, to: number, insert?: string, caret?: number): void;
+  /**
+   * A fresh snapshot of where the cursor is *now*.
+   *
+   * A context handed to `render` ages: the user keeps typing while the menu is
+   * on screen. Anything that edits based on the cursor has to re-read it first,
+   * or it will replace a range that has since moved.
+   */
+  now(): CursorContext;
 }
 
 export interface ConceptWidget {
@@ -133,6 +148,7 @@ function contextOf(view: EditorView, language: LangId): CursorContext {
   const range = state.selection.main;
   const line = state.doc.lineAt(range.head);
   return {
+    now: () => contextOf(view, language),
     language,
     pos: range.head,
     line: { number: line.number, from: line.from, to: line.to, text: line.text },
@@ -188,9 +204,17 @@ export function conceptHost(language: LangId): Extension {
     ViewPlugin.fromClass(
       class {
         private frame = 0;
+        /** Inline widgets live here, beside the content rather than inside it. */
+        private readonly overlay: HTMLElement;
+        private mountedKey: string | null = null;
+        private mounted: ConceptWidget | null = null;
+        private blockKeys = '';
 
         constructor(readonly view: EditorView) {
           hosts.add(view);
+          this.overlay = document.createElement('div');
+          this.overlay.className = 'cm-concept-layer';
+          view.dom.append(this.overlay);
         }
 
         update(update: ViewUpdate): void {
@@ -199,6 +223,7 @@ export function conceptHost(language: LangId): Extension {
             update.docChanged ||
             update.selectionSet ||
             update.focusChanged ||
+            update.geometryChanged ||
             update.transactions.some((tr) => tr.effects.some((e) => e.is(recompute)));
           if (triggered) this.schedule();
         }
@@ -212,40 +237,89 @@ export function conceptHost(language: LangId): Extension {
           if (this.frame) return;
           this.frame = requestAnimationFrame(() => {
             this.frame = 0;
-            // Dispatching into a view that is mid-composition corrupts the
-            // input: Android keyboards compose a whole word before committing
-            // it, and an unrelated transaction makes them re-send or replace
-            // what is already there. Wait for the word to land.
-            if (this.view.composing) {
-              this.schedule();
-              return;
-            }
             this.run();
           });
         }
 
         private run(): void {
           const ctx = contextOf(this.view, language);
-          const ranges = [];
+          let inline: { widget: ConceptWidget; id: string } | null = null;
+          const blocks: ReturnType<typeof Decoration.widget>[] = [];
+          const positions: number[] = [];
+          let keys = '';
 
           for (const provider of providers) {
             const widget = runProvider(provider, () => provider.render(ctx), null);
             if (!widget) continue;
-            const below = widget.placement === 'below';
-            ranges.push(
-              Decoration.widget({
-                widget: new ConceptWidgetType(widget, provider.id),
-                side: 1,
-                block: below,
-              }).range(below ? ctx.line.to : ctx.pos),
-            );
+            if (widget.placement === 'below') {
+              keys += `${provider.id}:${widget.key ?? ''}|`;
+              blocks.push(
+                Decoration.widget({
+                  widget: new ConceptWidgetType(widget, provider.id),
+                  side: 1,
+                  block: true,
+                }),
+              );
+              positions.push(ctx.line.to);
+            } else if (!inline) {
+              inline = { widget, id: `${provider.id}:${widget.key ?? Math.random()}` };
+            }
           }
 
-          this.view.dispatch({ effects: setWidgets.of(Decoration.set(ranges, true)) });
+          this.showInline(inline, ctx);
+
+          // Block widgets are still decorations - they take real space under the
+          // line. They change when a card opens or closes, not per keystroke, so
+          // the transaction is rare and can wait out a composition.
+          if (keys !== this.blockKeys) {
+            if (this.view.composing) {
+              this.schedule();
+              return;
+            }
+            this.blockKeys = keys;
+            const set = Decoration.set(
+              blocks.map((deco, i) => deco.range(positions[i]!)),
+              true,
+            );
+            this.view.dispatch({ effects: setWidgets.of(set) });
+          }
+        }
+
+        /** Mount, reuse or drop the inline widget, and park it at the caret. */
+        private showInline(next: { widget: ConceptWidget; id: string } | null, ctx: CursorContext): void {
+          if (!next) {
+            if (this.mounted) {
+              this.mounted.destroy?.();
+              this.mounted = null;
+              this.mountedKey = null;
+              this.overlay.replaceChildren();
+            }
+            this.overlay.style.display = 'none';
+            return;
+          }
+
+          if (next.id !== this.mountedKey) {
+            this.mounted?.destroy?.();
+            this.mounted = next.widget;
+            this.mountedKey = next.id;
+            this.overlay.replaceChildren(next.widget.dom);
+          }
+
+          const coords = this.view.coordsAtPos(ctx.pos);
+          if (!coords) {
+            this.overlay.style.display = 'none';
+            return;
+          }
+          const box = this.view.dom.getBoundingClientRect();
+          this.overlay.style.display = 'block';
+          this.overlay.style.left = `${Math.round(coords.left - box.left)}px`;
+          this.overlay.style.top = `${Math.round(coords.bottom - box.top)}px`;
         }
 
         destroy(): void {
           if (this.frame) cancelAnimationFrame(this.frame);
+          this.mounted?.destroy?.();
+          this.overlay.remove();
           hosts.delete(this.view);
         }
       },

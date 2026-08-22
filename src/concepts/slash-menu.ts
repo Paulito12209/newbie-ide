@@ -145,10 +145,16 @@ function onPress(node: HTMLElement, action: () => void): void {
   });
 }
 
-function choose(entry: Entry, ctx: CursorContext, trigger: Trigger): void {
+function choose(entry: Entry, staleCtx: CursorContext, staleTrigger: Trigger): void {
   selected = 0;
   suppressed = null;
   autoSlash = false;
+
+  // Re-read the cursor. The menu may have been built several keystrokes ago -
+  // a composing keyboard delivers a whole word at once - and replacing the
+  // range it was built with would leave the rest of what you typed behind.
+  const ctx = staleCtx.now();
+  const trigger = triggerAt(ctx) ?? staleTrigger;
 
   if (entry.kind === 'tag' || entry.kind === 'layout') {
     // The only case where the teaching layer writes code, and only because the

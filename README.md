@@ -393,6 +393,18 @@ const off = registerConceptProvider({
 });
 ```
 
+Inline widgets are mounted in an **overlay layer beside the content**, not as a
+decoration inside it. That is not cosmetic: a decoration at the caret has to be
+installed with a transaction, and both the transaction and the DOM churn break
+an IME mid-word - which on an Android keyboard is every word. Measured: six
+keystrokes with the menu open and filtering produce **zero** transactions beyond
+the typing itself. Block widgets stay decorations, because they take real space
+under the line and only change when a card opens or closes.
+
+`ctx.now()` returns a fresh snapshot. A context handed to `render` ages - a
+composing keyboard delivers a whole word at once - so anything that edits based
+on the cursor re-reads it first, or it replaces a range that has since moved.
+
 Guarantees the host makes: providers run at most once per animation frame and
 never inside the CodeMirror update cycle; returning `null` renders nothing;
 widgets sharing a `key` are not remounted, so a running animation survives
