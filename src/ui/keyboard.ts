@@ -19,9 +19,10 @@ function inset(): number {
   return hidden > MIN_KEYBOARD ? Math.round(hidden) : 0;
 }
 
-export function trackKeyboard(): () => void {
+export function trackKeyboard(onChange?: (inset: number) => void): () => void {
   const root = document.documentElement;
   let frame = 0;
+  let last = -1;
 
   function apply(): void {
     if (frame) return;
@@ -31,6 +32,12 @@ export function trackKeyboard(): () => void {
       root.style.setProperty('--kb-inset', `${px}px`);
       if (px > 0) root.dataset.keyboard = 'open';
       else delete root.dataset.keyboard;
+      if (px === last) return;
+      last = px;
+      // iOS scrolls the page itself to reveal the focused element. The shell is
+      // already sized to what is visible, so that scroll only hides the top.
+      if (window.scrollY !== 0) window.scrollTo(0, 0);
+      onChange?.(px);
     });
   }
 

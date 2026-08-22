@@ -19,7 +19,7 @@ import { closeBrackets } from './close-brackets';
 import { conceptHost } from './concept-hook';
 import { loadLanguage, peekLanguage } from './languages';
 import { lineMenu } from './line-menu';
-import { missingCloserChips } from './missing-closers';
+import { lineSelect } from './line-select';
 import { editableSlots } from './slots';
 import { touchGestures } from './touch-gestures';
 import { MOBILE_QUERY } from '../ui/mobile';
@@ -43,6 +43,11 @@ export interface EditorHandle {
    * that file, in which case the caller owns the text and can change it itself.
    */
   append(fileId: string, text: string): boolean;
+  /**
+   * Scroll the caret back into view. Needed when the visible area changes
+   * under the editor - the keyboard opening does not tell CodeMirror anything.
+   */
+  revealCursor(): void;
   /** Drop a deleted file's state so it cannot come back. */
   forget(fileId: string): void;
   focus(): void;
@@ -81,7 +86,7 @@ export function createEditor(parent: HTMLElement, options: EditorOptions): Edito
         compartment.of(mode ?? []),
         editableSlots(file.kind),
         lineMenu(),
-        missingCloserChips(),
+        lineSelect(),
         touchGestures(),
         // Keep a line of room below the caret, so it is never the last visible
         // line above the keyboard.
@@ -158,6 +163,18 @@ export function createEditor(parent: HTMLElement, options: EditorOptions): Edito
         slot.state = slot.state.update({ changes: { from: slot.state.doc.length, insert: text } }).state;
       }
       return true;
+    },
+    revealCursor(): void {
+      if (view.composing) return;
+      view.requestMeasure();
+      view.dispatch({
+        effects: EditorView.scrollIntoView(view.state.selection.main.head, {
+          y: 'nearest',
+          // A line and a half of air, so the caret is never flush against the
+          // keyboard.
+          yMargin: Math.round(view.defaultLineHeight * 1.5),
+        }),
+      });
     },
     forget(fileId: string): void {
       slots.delete(fileId);

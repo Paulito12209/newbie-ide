@@ -215,7 +215,14 @@ export function conceptHost(language: LangId): Extension {
           this.overlay = document.createElement('div');
           this.overlay.className = 'cm-concept-layer';
           view.dom.append(this.overlay);
+          // Scrolling moves the caret under the overlay without producing an
+          // update, so the menu has to be told to follow.
+          view.scrollDOM.addEventListener('scroll', this.onScroll, { passive: true });
         }
+
+        private onScroll = (): void => {
+          if (this.mounted) this.schedule();
+        };
 
         update(update: ViewUpdate): void {
           if (providers.size === 0) return;
@@ -318,6 +325,7 @@ export function conceptHost(language: LangId): Extension {
 
         destroy(): void {
           if (this.frame) cancelAnimationFrame(this.frame);
+          this.view.scrollDOM.removeEventListener('scroll', this.onScroll);
           this.mounted?.destroy?.();
           this.overlay.remove();
           hosts.delete(this.view);

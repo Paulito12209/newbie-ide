@@ -473,13 +473,90 @@ body {
 
 .sl-options-item:hover { background: var(--surface-2); }
 
+/* --- line selection ----------------------------------------------------------
+   A circle at the right-hand end of every line with code, and a bar above the
+   file bar with what to do with the ticked ones. */
+
+.cm-line-check {
+  float: right;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin: 3px 4px 0 24px;
+  border: 2px solid var(--border-strong);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.cm-line-check-on {
+  background: var(--fg);
+  border-color: var(--fg);
+  box-shadow: inset 0 0 0 3px var(--bg);
+}
+
+.sl-select-bar {
+  position: fixed;
+  left: 8px;
+  right: 8px;
+  bottom: calc(var(--bar-h, 0px) + 8px);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.sl-select-count {
+  flex: 1;
+  min-width: 0;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sl-select-action,
+.sl-select-done {
+  flex: 0 0 auto;
+  font: inherit;
+  color: var(--fg);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+
+.sl-select-action:disabled {
+  color: var(--muted);
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sl-select-danger:not(:disabled) { color: var(--syn-invalid); }
+
+.sl-select-done { background: var(--fill-strong); }
+
 /* --- line actions ------------------------------------------------------------
    The dots sit 40px past the end of a line that finishes a tag. Mobile only:
    above the breakpoint a mouse makes both actions trivial already. */
 
-/* Closers still owed, parked at the right edge of the active line. Greyed out
-   because they are not in the document yet. */
-.cm-closers { display: none; }
+/* Everything that hangs off the right-hand end of a line, always flush right:
+   the closers it still owes, then the actions button. */
+.cm-line-tools {
+  float: right;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 24px;
+}
 
 .cm-closer {
   display: inline-flex;
@@ -501,7 +578,6 @@ body {
 .cm-line-menu {
   display: inline-flex;
   align-items: center;
-  margin-left: 40px;
   padding: 2px 6px;
   color: var(--muted);
   cursor: pointer;
@@ -893,12 +969,6 @@ body {
     border-bottom: 0;
     background: var(--bar-bg);
     backdrop-filter: blur(10px);
-  }
-
-  .cm-closers {
-    display: inline-flex;
-    float: right;
-    margin-right: 6px;
   }
 
   #tabs button {

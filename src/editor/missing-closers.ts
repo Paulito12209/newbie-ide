@@ -12,18 +12,17 @@
  * which is exactly the case a per-line scan misses.
  *
  * Mobile only: on a desktop keyboard the character is one keypress away.
+ *
+ * The scan covers the whole file, not the text before the caret. Stopping at
+ * the caret reported a `>` as missing whenever the caret sat inside a tag that
+ * was perfectly closed two characters later.
  */
-import { Decoration, EditorView, ViewPlugin, WidgetType } from '@codemirror/view';
-import type { DecorationSet, ViewUpdate } from '@codemirror/view';
-import type { Extension } from '@codemirror/state';
-import { MOBILE_QUERY } from '../ui/mobile';
-
 const PAIRS: Record<string, string> = { '<': '>', '{': '}', '(': ')', '[': ']' };
 const QUOTES = new Set(['"', "'", '`']);
 /** More than a few and the line is broken in a way a chip will not fix. */
 const MAX_SHOWN = 3;
 /** Past this the file is too big to rescan on every keystroke, and a beginner project is not. */
-const MAX_SCAN = 20000;
+export const MAX_SCAN = 20000;
 
 /**
  * Closers still owed, innermost first. Quotes swallow everything until they
@@ -51,85 +50,4 @@ export function missingClosers(text: string): string[] {
   const owed = stack.reverse();
   if (quote) owed.unshift(quote);
   return owed.slice(0, MAX_SHOWN);
-}
-
-class CloserGhosts extends WidgetType {
-  constructor(readonly chars: string) {
-    super();
-  }
-
-  override eq(other: CloserGhosts): boolean {
-    return other.chars === this.chars;
-  }
-
-  toDOM(): HTMLElement {
-    const wrap = document.createElement('span');
-    wrap.className = 'cm-closers';
-    for (const char of this.chars) {
-      const chip = document.createElement('span');
-      chip.className = 'cm-closer';
-      chip.textContent = char;
-      chip.dataset.char = char;
-      chip.setAttribute('role', 'button');
-      chip.setAttribute('aria-label', `Insert ${char}`);
-      wrap.append(chip);
-    }
-    return wrap;
-  }
-
-  override ignoreEvent(): boolean {
-    return false;
-  }
-}
-
-function build(view: EditorView): DecorationSet {
-  if (!window.matchMedia(MOBILE_QUERY).matches) return Decoration.none;
-  const head = view.state.selection.main.head;
-  if (head > MAX_SCAN) return Decoration.none;
-  const line = view.state.doc.lineAt(head);
-  const owed = missingClosers(view.state.sliceDoc(0, head));
-  if (owed.length === 0) return Decoration.none;
-  return Decoration.set([
-    Decoration.widget({ widget: new CloserGhosts(owed.join('')), side: 1 }).range(line.to),
-  ]);
-}
-
-const press = EditorView.domEventHandlers({
-  click(event, view) {
-    const target = (event.target as HTMLElement | null)?.closest?.('.cm-closer');
-    if (!(target instanceof HTMLElement)) return false;
-    const char = target.dataset.char;
-    if (!char || view.composing) return false;
-    // At the caret, which is where the character was missing from.
-    const at = view.state.selection.main.head;
-    view.dispatch({
-      changes: { from: at, insert: char },
-      selection: { anchor: at + char.length },
-      scrollIntoView: true,
-      userEvent: 'input.type',
-    });
-    return true;
-  },
-});
-
-export function missingCloserChips(): Extension {
-  return [
-    ViewPlugin.fromClass(
-      class {
-        decorations: DecorationSet;
-
-        constructor(view: EditorView) {
-          this.decorations = build(view);
-        }
-
-        update(update: ViewUpdate): void {
-          if (update.docChanged || update.selectionSet || update.viewportChanged) {
-            this.decorations = build(update.view);
-          }
-        }
-      },
-      { decorations: (plugin) => plugin.decorations },
-    ),
-    press,
-  ];
 }

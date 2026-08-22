@@ -12,6 +12,7 @@ export interface LineActionsOptions {
   /** Where the dots are, so the menu can sit next to them. */
   anchor: DOMRect;
   onCopy: () => void;
+  onSelect: () => void;
   onDelete: () => void;
   onClone: (times: number) => void;
 }
@@ -33,6 +34,15 @@ export function openLineActions(options: LineActionsOptions): void {
   copy.textContent = 'Copy line';
   copy.addEventListener('click', () => {
     options.onCopy();
+    menu.hidePopover();
+  });
+
+  const select = document.createElement('button');
+  select.type = 'button';
+  select.className = 'sl-line-item';
+  select.textContent = 'Select lines';
+  select.addEventListener('click', () => {
+    options.onSelect();
     menu.hidePopover();
   });
 
@@ -95,7 +105,7 @@ export function openLineActions(options: LineActionsOptions): void {
   controls.append(count, stepper(-1, ICON_CHEVRON_DOWN, 'Fewer'), stepper(1, ICON_CHEVRON_UP, 'More'), add);
   cloneRow.append(label, controls);
 
-  menu.append(copy, remove, cloneRow);
+  menu.append(copy, select, remove, cloneRow);
   menu.addEventListener('toggle', (event) => {
     if ((event as ToggleEvent).newState === 'closed') menu.remove();
   });

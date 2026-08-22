@@ -217,23 +217,45 @@ thing your thumb has to hit is not.
 
 ## Line actions
 
-One dots button, 40px past the end of a single line - the line you are working
-on. Which line that is depends on how you are pointing: **on mobile it follows
-the caret**, because the active line is the one you are in and there is no hover
-on a touch screen; **on desktop it follows the mouse**, because hovering is how
-you say "this line" without clicking into it. Blank lines get nothing.
+One group of tools sits flush against the right-hand end of a single line - the
+line you are working on. Which line that is depends on how you are pointing: **on
+mobile it follows the caret**, because the active line is the one you are in and
+there is no hover on a touch screen; **on desktop it follows the mouse**. Blank
+lines get nothing.
 
-It opens three actions:
+The group holds any closers the file still owes, then a dots button opening:
 
 - **Copy line** - the line without its indentation
+- **Select lines** - see below
 - **Delete line** - takes the line break with it, so no blank line is left
-- **Clone line** - a count with chevron steppers either side of it and an
-  `+ Add` button. The traffic-light case: you want the same element three times
-  and typing it out on a phone is the whole problem.
+- **Clone line** - a count with chevron steppers either side and an `+ Add`
+  button. The traffic-light case: you want the same element three times and
+  typing it out on a phone is the whole problem.
 
 The steppers sit side by side rather than stacked, because a stacked spinner
 gives each arrow about 17px of height, which is not a touch target. The count
 input is 16px for the same iOS reason as the rename dialog.
+
+### Selecting several lines
+
+"Select lines" puts a circle at the right-hand end of every line with code. Tick
+what you want and a bar above the file bar offers Copy, Clone and Delete for all
+of them at once - copy joins them without their indentation, clone puts the block
+back directly beneath itself, delete removes them bottom-up so the earlier
+positions stay valid.
+
+Any edit ends the mode: a selection of line numbers stops meaning anything the
+moment the lines move.
+
+### Missing closers
+
+Delete half of a pair by accident and the closer you still owe appears greyed
+out at the right of the line, just left of the dots. Tap it and it lands at the
+caret - `>`, `}` and `"` are two keyboard layers deep on a phone.
+
+The scan covers the **whole file**, not the text before the caret. Stopping at
+the caret reported a `>` as missing whenever the caret happened to sit inside a
+tag that was closed two characters later.
 
 ## Typing with a keyboard up
 
@@ -246,6 +268,13 @@ into a region that no longer exists.
   up - they were competing with the code for the few lines that remain.
 - CodeMirror gets a `scrollMargins` bottom of one line, so the caret is never
   the last visible line; there is always a line of context under it.
+- When the keyboard actually appears, the editor is told to pull the caret back
+  into view - opening it changes the space without telling CodeMirror anything.
+  Measured on a 40-line file: caret at y=663 with the fold at 812, keyboard up
+  moves the fold to 472 and hides it, and the reveal puts it at 414 with 59px of
+  clearance. iOS also scrolls the page itself to reveal the focused element,
+  which only hides the top of a shell that is already sized correctly, so that
+  scroll is undone.
 - The slash menu measures the room above and below the cursor and flips upwards
   when there is more room there, growing toward the top of the screen. Measured
   with the caret on the last line of a 640px window: the menu occupied 72-620px,
@@ -348,8 +377,9 @@ src/
     concept-hook.ts    extension point for the concept-teaching layer
     close-brackets.ts  minimal auto-closing brackets
     slots.ts           tappable targets at editable positions
-    line-menu.ts       the dots at the end of the current line
-    missing-closers.ts the closers you still owe, parked on the right
+    line-menu.ts       the tools at the end of the current line
+    line-select.ts     tick several lines, act on all of them
+    missing-closers.ts which closers a file still owes
     touch-gestures.ts  double tap to select a word
     languages.ts       mode registry, lazy loading, prefetch
     lang/{html,css,js}.ts

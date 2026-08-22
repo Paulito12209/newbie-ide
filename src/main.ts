@@ -40,8 +40,10 @@ const statusBar = document.getElementById('status') as HTMLElement;
 // attribute, this keeps the module the single source of truth afterwards.
 applyTheme(session.theme);
 
-// Sizes the shell to the part of the viewport the keyboard is not covering.
-trackKeyboard();
+// Sizes the shell to the part of the viewport the keyboard is not covering, and
+// pulls the caret back above it once the space has changed.
+let onKeyboardChange: () => void = () => {};
+trackKeyboard(() => onKeyboardChange());
 
 const onThemeChange = (mode: typeof session.theme): void => {
   session.theme = mode;
@@ -135,6 +137,8 @@ const editor = createEditor(editorHost, {
     else scheduleRebuild();
   },
 });
+
+onKeyboardChange = () => editor.revealCursor();
 
 const tabs = createTabs(tabsHost, {
   onSelect: (id) => selectFile(id),

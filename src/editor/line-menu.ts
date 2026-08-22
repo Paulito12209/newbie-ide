@@ -1,5 +1,6 @@
 /**
- * A dots button 40px past the end of one line, opening that line's actions:
+ * The tools that sit at the right-hand end of one line: any closers that line
+ * still owes, then a dots button opening that line's actions:
  * copy it, or clone it n times.
  *
  * Only ever one at a time, and which line depends on what you are pointing
@@ -14,33 +15,56 @@ import { MOBILE_QUERY } from '../ui/mobile';
 import { copyText } from '../ui/clipboard';
 import { ICON_DOTS } from '../ui/icons';
 import { openLineActions } from '../ui/line-actions';
+import { MAX_SCAN, missingClosers } from './missing-closers';
+import { isSelecting, startSelecting } from './line-select';
 
-class LineDots extends WidgetType {
-  constructor(readonly pos: number) {
+class LineTools extends WidgetType {
+  constructor(
+    readonly pos: number,
+    /** Closers still owed, drawn to the left of the dots. */
+    readonly owed: string,
+  ) {
     super();
   }
 
-  override eq(other: LineDots): boolean {
-    return other.pos === this.pos;
+  override eq(other: LineTools): boolean {
+    return other.pos === this.pos && other.owed === this.owed;
   }
 
   toDOM(): HTMLElement {
+    const tools = document.createElement('span');
+    tools.className = 'cm-line-tools';
+
+    for (const char of this.owed) {
+      const chip = document.createElement('span');
+      chip.className = 'cm-closer';
+      chip.textContent = char;
+      chip.dataset.char = char;
+      chip.setAttribute('role', 'button');
+      chip.setAttribute('aria-label', `Insert ${char}`);
+      tools.append(chip);
+    }
+
     const button = document.createElement('span');
     button.className = 'cm-line-menu';
     button.innerHTML = ICON_DOTS;
     button.dataset.pos = String(this.pos);
     button.setAttribute('role', 'button');
     button.setAttribute('aria-label', 'Line actions');
-    return button;
+    tools.append(button);
+    return tools;
   }
 
-  /** Let the shared handler below see the tap. */
+  /** Let the shared handlers below see the tap. */
   override ignoreEvent(): boolean {
     return false;
   }
 }
 
 function build(view: EditorView, hovered: number | null): DecorationSet {
+  // While picking lines, the circles are the only thing that should be offered
+  // at the right-hand end.
+  if (isSelecting(view)) return Decoration.none;
   const onMobile = window.matchMedia(MOBILE_QUERY).matches;
   const number = onMobile ? view.state.doc.lineAt(view.state.selection.main.head).number : hovered;
   if (number == null || number < 1 || number > view.state.doc.lines) return Decoration.none;
@@ -49,12 +73,33 @@ function build(view: EditorView, hovered: number | null): DecorationSet {
   // Nothing to copy or clone on a blank line.
   if (line.text.trim() === '') return Decoration.none;
 
+  // Whole file, not the text before the caret: a `>` two characters to the
+  // right of the cursor is not missing.
+  const owed =
+    onMobile && view.state.doc.length <= MAX_SCAN ? missingClosers(view.state.doc.toString()).join('') : '';
+
   return Decoration.set([
-    Decoration.widget({ widget: new LineDots(line.to), side: 1 }).range(line.to),
+    Decoration.widget({ widget: new LineTools(line.to, owed), side: 1 }).range(line.to),
   ]);
 }
 
 const press = EditorView.domEventHandlers({
+  click(event, view) {
+    // A closer the line still owes, dropped in at the caret.
+    const chip = (event.target as HTMLElement | null)?.closest?.('.cm-closer');
+    if (chip instanceof HTMLElement && chip.dataset.char && !view.composing) {
+      const at = view.state.selection.main.head;
+      view.dispatch({
+        changes: { from: at, insert: chip.dataset.char },
+        selection: { anchor: at + chip.dataset.char.length },
+        scrollIntoView: true,
+        userEvent: 'input.type',
+      });
+      return true;
+    }
+    return false;
+  },
+
   mousedown(event, view) {
     const target = (event.target as HTMLElement | null)?.closest?.('.cm-line-menu');
     if (!(target instanceof HTMLElement)) return false;
@@ -66,6 +111,7 @@ const press = EditorView.domEventHandlers({
     openLineActions({
       anchor: target.getBoundingClientRect(),
       onCopy: () => copyText(line.text.trim()),
+      onSelect: () => startSelecting(view),
       onDelete: () => {
         // Take the line break with it, so deleting does not leave a blank line.
         // On the last line there is no break after, so eat the one before.
