@@ -217,8 +217,17 @@ thing your thumb has to hit is not.
 
 ## Line actions
 
-One group of tools sits flush against the right-hand end of a single line - the
-line you are working on. Which line that is depends on how you are pointing: **on
+The per-line controls live in a fixed strip down the right-hand edge of the
+code. The content reserves that strip, and the controls are pinned in it above
+the text, carrying the editor background so a long line is covered rather than
+colliding with them.
+
+They used to float at the end of the text, which put them at a different x on
+every line and, on a wrapped line, dropped them onto the last visual row right
+beside the next line's control - two circles in what looked like one row.
+
+One group of tools sits in that strip for a single line - the line you are
+working on. Which line that is depends on how you are pointing: **on
 mobile it follows the caret**, because the active line is the one you are in and
 there is no hover on a touch screen; **on desktop it follows the mouse**. Blank
 lines get nothing.

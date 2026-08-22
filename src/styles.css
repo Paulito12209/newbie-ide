@@ -11,6 +11,8 @@
 
   --split: 50%;
   --menubar-h: 44px;
+  /* Room down the right of the code for the per-line controls. */
+  --line-gutter: 44px;
 
   --bg: #ffffff;
   --fg: #111111;
@@ -478,11 +480,10 @@ body {
    file bar with what to do with the ticked ones. */
 
 .cm-line-check {
-  float: right;
-  display: inline-block;
+  display: block;
   width: 18px;
   height: 18px;
-  margin: 3px 4px 0 24px;
+  margin-top: 3px;
   border: 2px solid var(--border-strong);
   border-radius: 50%;
   cursor: pointer;
@@ -548,14 +549,34 @@ body {
    The dots sit 40px past the end of a line that finishes a tag. Mobile only:
    above the breakpoint a mouse makes both actions trivial already. */
 
-/* Everything that hangs off the right-hand end of a line, always flush right:
-   the closers it still owes, then the actions button. */
+/* --- the line control column -------------------------------------------------
+   A fixed strip down the right-hand edge for the per-line controls. They used
+   to float at the end of the text, which put them at a different x on every
+   line and, on a wrapped line, dropped them onto the last visual row right next
+   to the next line's control - two circles in what looked like one row.
+
+   Now the content reserves the strip, the controls are pinned in it above the
+   text, and they carry the editor background so anything long enough to reach
+   them is covered rather than colliding. */
+
+#editor-host .cm-content { padding-right: var(--line-gutter); }
+#editor-host .cm-line { position: relative; }
+
+.cm-line-tools,
+.cm-line-check {
+  position: absolute;
+  top: 0;
+  right: calc(-1 * (var(--line-gutter) - 8px));
+  z-index: 2;
+  background: var(--bg);
+}
+
+/* Closers sit to the left of the dots and grow leftwards over the code. */
 .cm-line-tools {
-  float: right;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-left: 24px;
+  padding-left: 6px;
 }
 
 .cm-closer {
