@@ -192,6 +192,29 @@ Two different causes, two different fixes:
 Pinch zoom is left alone - `user-scalable=no` would have fixed both in one line
 and taken accessibility with it.
 
+## Editable slots
+
+Landing a caret between `""`, or between `>` and `</`, is a two-pixel target.
+Every position the language actually lets you type into is marked, and each one
+carries a hit area far larger than what it draws:
+
+- an **empty** slot becomes a small round chip; tapping it puts the caret inside
+- a **filled** slot gets a quiet pill around the value; tapping it **selects the
+  whole value**, so the next keystroke replaces it
+
+That second case is the one precision-tapping never solved: changing a value
+afterwards used to mean placing a caret and then dragging a selection over it.
+
+Positions come from the syntax tree rather than a regex, so a slot is only
+offered where the language really has one - never inside a comment, or a string
+that happens to look like markup. Today: HTML attribute values and text content,
+CSS declaration values, JS string contents. `<script>` and `<style>` bodies are
+excluded, since their content is another language rather than a value.
+
+The chip is 8px, but its hit area is 22px tall and reaches 5px past each side.
+That gap is the point: the mark stays small enough to read as code, while the
+thing your thumb has to hit is not.
+
 ## Error handling
 
 `window.onerror` and `unhandledrejection` are caught inside the iframe and
@@ -216,6 +239,7 @@ src/
     editor.ts          CodeMirror setup; one EditorState per tab
     concept-hook.ts    extension point for the concept-teaching layer
     close-brackets.ts  minimal auto-closing brackets
+    slots.ts           tappable targets at editable positions
     languages.ts       mode registry, lazy loading, prefetch
     lang/{html,css,js}.ts
     theme.ts           plain light theme + highlight style
@@ -296,7 +320,9 @@ keystroke. Escape on a prompt you did not type removes it again.
 
 26 tags: `h1`-`h6`, `p`, `div`, `span`, `a`, `button`, `ul`, `ol`, `li`, `img`,
 `strong`, `em`, `br`, `section`, `header`, `footer`, `nav`, `main`, `form`,
-`input`, `label`.
+`input`, `label`. Most of them appear twice - `/div` offers both `<div></div>`
+and `<div class=""></div>`, and the variant drops the caret in the class value,
+because that is the part you came to fill in.
 
 This is snippet insertion, which the brief originally ruled out, and it is here
 for one reason: on a phone keyboard `<` and `>` sit two layers deep, so writing

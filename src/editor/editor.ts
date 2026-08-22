@@ -15,6 +15,7 @@ import type { FileDoc, LangId } from '../state';
 import { closeBrackets } from './close-brackets';
 import { conceptHost } from './concept-hook';
 import { loadLanguage, peekLanguage } from './languages';
+import { editableSlots } from './slots';
 import { theme } from './theme';
 
 export interface EditorOptions {
@@ -66,6 +67,7 @@ export function createEditor(parent: HTMLElement, options: EditorOptions): Edito
         keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
         theme,
         compartment.of(mode ?? []),
+        editableSlots(file.kind),
         conceptHost(file.kind),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) options.onDocChanged(file.id, update.state.doc);

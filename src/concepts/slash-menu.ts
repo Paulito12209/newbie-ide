@@ -159,7 +159,7 @@ function buildMenu(entries: readonly Entry[], ctx: CursorContext, trigger: Trigg
 
     const head = element('div', 'sl-head');
     const isTag = entry.kind === 'tag';
-    head.append(element('span', 'sl-title', isTag ? entry.tag.id : entry.concept.title));
+    head.append(element('span', 'sl-title', isTag ? entry.tag.label : entry.concept.title));
     head.append(
       element('span', 'sl-badge' + (isTag ? ' sl-badge-tag' : ''), isTag ? 'TAG' : BADGE[entry.concept.language]!),
     );

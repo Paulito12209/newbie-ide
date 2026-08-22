@@ -36,6 +36,8 @@
   --syn-type: #9c5700;
   --syn-punct: #555555;
   --syn-invalid: #b00020;
+  --slot-fill: rgba(17, 17, 17, 0.07);
+  --slot-dot: #9a9a9a;
 
   --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
@@ -70,6 +72,8 @@
     --syn-type: #e0b070;
     --syn-punct: #9a9a9a;
     --syn-invalid: #f08080;
+    --slot-fill: rgba(255, 255, 255, 0.1);
+    --slot-dot: #6f7479;
   }
 }
 
@@ -100,6 +104,8 @@
   --syn-type: #e0b070;
   --syn-punct: #9a9a9a;
   --syn-invalid: #f08080;
+  --slot-fill: rgba(255, 255, 255, 0.1);
+  --slot-dot: #6f7479;
 }
 
 * { box-sizing: border-box; }
@@ -237,6 +243,39 @@ body {
   min-height: 0;
   overflow: hidden;
   background: var(--bg);
+}
+
+/* --- editable slots ---------------------------------------------------------
+   The visible mark stays small; the hit area is deliberately much bigger than
+   what is drawn, which is the whole point on a touch screen. */
+
+.cm-slot {
+  position: relative;
+  cursor: pointer;
+}
+
+.cm-slot::after {
+  content: '';
+  position: absolute;
+  inset: -7px -5px;
+}
+
+.cm-slot-filled {
+  background: var(--slot-fill);
+  border-radius: 4px;
+  padding: 1px 2px;
+  margin: 0 -1px;
+}
+
+/* An empty slot has no text to aim at, so it gets something to aim at. */
+.cm-slot-empty {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  vertical-align: baseline;
+  border-radius: 50%;
+  background: var(--slot-dot);
+  opacity: 0.85;
 }
 
 #editor-host .cm-editor { height: 100%; }

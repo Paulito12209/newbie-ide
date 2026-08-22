@@ -25,7 +25,9 @@ const base = EditorView.theme({
     padding: '8px 0',
     caretColor: 'var(--fg)',
   },
-  '.cm-scroller': { lineHeight: '1.5', fontFamily: 'var(--font-mono)' },
+  // 13px * 1.5 = 19.5px was the old leading; 4px more, set explicitly so it
+  // stays exact rather than drifting with the font size.
+  '.cm-scroller': { lineHeight: '23.5px', fontFamily: 'var(--font-mono)' },
   '.cm-gutters': {
     backgroundColor: 'var(--gutter)',
     color: 'var(--gutter-fg)',
