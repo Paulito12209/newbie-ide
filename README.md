@@ -440,7 +440,12 @@ type the content straight away:
 Pressing Enter **directly after a closing tag** opens the next line already
 prompting. Anywhere else Enter is just Enter - mid-line or inside an attribute a
 new element makes no sense, and a prompt you did not ask for is worse than one
-keystroke. Escape on a prompt you did not type removes it again.
+keystroke.
+
+Declining that prompt is one keystroke too: Enter on it with nothing typed
+clears the slash and gives you the newline you pressed Enter for, rather than
+picking whatever happened to be at the top of the list. Escape does the same. A
+slash you typed yourself is left alone - it is yours.
 
 26 tags: `h1`-`h6`, `p`, `div`, `span`, `a`, `button`, `ul`, `ol`, `li`, `img`,
 `strong`, `em`, `br`, `section`, `header`, `footer`, `nav`, `main`, `form`,

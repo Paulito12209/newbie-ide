@@ -360,6 +360,22 @@ const provider: ConceptProvider = {
       }
       case 'Enter':
       case 'Tab': {
+        // Nothing typed after the slash means nothing was chosen. Picking the
+        // first row here would insert something nobody asked for.
+        if (trigger.query === '') {
+          if (key === 'Tab') return false;
+          // A slash the user never typed should not survive being declined:
+          // clear the prompt and give them the newline they pressed Enter for.
+          if (autoSlash) {
+            autoSlash = false;
+            ctx.replaceRange(ctx.line.from, ctx.pos, `\n${trigger.indent}`);
+            refreshConcepts();
+            return true;
+          }
+          // A slash they did type stays; Enter just behaves normally.
+          return false;
+        }
+
         const entry = entries[selected];
         if (!entry) return false;
         choose(entry, ctx, trigger);

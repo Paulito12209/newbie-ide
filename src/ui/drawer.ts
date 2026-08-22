@@ -75,9 +75,15 @@ export function createDrawer(options: DrawerOptions): Drawer {
     options.onThemeChange(theme);
   });
 
+  // Settings and the theme share a row; New file gets its own, because it is
+  // the one that changes the file list.
+  const row = document.createElement('div');
+  row.className = 'sl-drawer-row-actions';
+  row.append(settings, themeButton);
+
   const footer = document.createElement('div');
   footer.className = 'sl-drawer-footer';
-  footer.append(create, settings, themeButton);
+  footer.append(create, row);
 
   dialog.append(header, list, footer);
   closeOnBackdrop(dialog);
